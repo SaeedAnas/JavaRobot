@@ -1,0 +1,71 @@
+package org.firstinspires.ftc.teamcode;
+
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
+
+@TeleOp (name="gamepad", group="Forward")
+public class Teleop extends LinearOpMode {
+    DcMotor leftMotor;
+    DcMotor rightMotor;
+    DcMotor arm;
+    Servo rightServo;
+    Servo leftServo;
+    Servo armServo;
+    //DcMotor arm = hardwareMap.dcMotor.get("m2");
+    @Override
+    public void runOpMode() throws InterruptedException {
+        leftMotor = hardwareMap.dcMotor.get("m0");
+        rightMotor = hardwareMap.dcMotor.get("m1");
+        arm = hardwareMap.dcMotor.get("m2");
+        leftServo=hardwareMap.servo.get("leftServo");
+        rightServo=hardwareMap.servo.get("rightServo");
+        armServo=hardwareMap.servo.get("armServo");
+
+
+        rightMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        waitForStart();
+
+        while(opModeIsActive()){
+
+            // check to see if we need to move the servo.
+            /*if(gamepad1.y) {
+                // move to 0 degrees.
+
+            }
+            else if (gamepad1.x || gamepad1.b) {
+                // move to 90 degrees.
+
+            }
+            else if (gamepad1.a) {
+                // move to 180 degrees.
+
+            }*/
+
+
+            //drive fwd/backward
+
+            if(gamepad1.left_stick_x>-1) {
+                double power = -gamepad1.left_stick_y;
+                setDrivePower(power, power);
+            }
+            //turns
+
+            if(gamepad1.left_stick_y>-1) {
+                double turn = gamepad1.right_stick_x;
+                setDrivePower(turn, -turn);
+
+            }
+
+        }
+
+    }
+
+    public void setDrivePower(double leftPower, double rightPower) {
+        rightMotor.setPower(rightPower);
+        leftMotor.setPower(leftPower);
+    }
+
+}
