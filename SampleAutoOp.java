@@ -5,7 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 
-
+import java.util.concurrent.TimeUnit;
 
 
 @Autonomous
@@ -15,11 +15,11 @@ public class SampleAutoOp extends LinearOpMode {
     
     // TODO : Measure the Diameter of the Wheels (inches) and input the value here
     
-    private static final int DIAMETER = 5;
+    private static final double DIAMETER = 4.2;
     
     // TODO : Measure the Width of the drive train (inches) and input the value here
     
-    private static final int ROBOT_WIDTH = 17;
+    private static final double ROBOT_WIDTH = 17.5;
     
     // One full rotation (degrees)
     
@@ -36,6 +36,8 @@ public class SampleAutoOp extends LinearOpMode {
     private DcMotor rightMotor;
     
     private DcMotor foundationGrabber;
+
+    private Servo left, right;
 
 
     /**
@@ -208,6 +210,20 @@ public class SampleAutoOp extends LinearOpMode {
         return (int) Math.rint(motor.getCurrentPosition() + (degreesPercent * FULL_TICKS));
     }
 
+    /**
+     *
+     * @param degree = double between 0 and 1
+     * @param servo = servo you want to move
+     */
+
+    private static void moveServo(double degree, Servo servo) {
+        if( degree <= 1 || degree >= 0) {
+            servo.setPosition(degree);
+        }
+    }
+
+
+
 
 
 
@@ -218,9 +234,12 @@ public class SampleAutoOp extends LinearOpMode {
 
         // TODO : Make sure the device names are right here
 
-        leftMotor = hardwareMap.get(DcMotor.class, "leftMotor");
-        rightMotor = hardwareMap.get(DcMotor.class, "rightMotor");
-        foundationGrabber = hardwareMap.get(DcMotor.class, "m1");
+        leftMotor = hardwareMap.get(DcMotor.class, "left");
+        rightMotor = hardwareMap.get(DcMotor.class, "right");
+        rightMotor.setDirection(DcMotor.Direction.REVERSE);
+     foundationGrabber = hardwareMap.get(DcMotor.class, "grab");
+//        left = hardwareMap.get(Servo.class ,"leftServo");
+//        right = hardwareMap.get(Servo.class, "rightServo");
 
         // wait for the run
 
@@ -246,14 +265,25 @@ public class SampleAutoOp extends LinearOpMode {
 
             // the code only runs once
 
-            if(count < 1) {
-                move(calculatedDistanceTo, leftMotor, rightMotor, 1, 'f');
-                rotateByDegree(90, foundationGrabber, 1);
-                move(leftMotor, rightMotor, 1, 'r', 180);
-                move(calculatedDistanceFrom, leftMotor, rightMotor, 1, 'f');
-                rotateByDegree(90, foundationGrabber, -1);
-                count++;
-            }
+//            if(count < 1) {
+//                move(calculatedDistanceTo, leftMotor, rightMotor, 1, 'f');
+//                rotateByDegree(90, foundationGrabber, 1);
+//                move(leftMotor, rightMotor, 1, 'r', 180);
+//                move(calculatedDistanceFrom, leftMotor, rightMotor, 1, 'f');
+//                rotateByDegree(90, foundationGrabber, -1);
+//                count++;
+//            }
+
+            rightMotor.setPower(1);
+            leftMotor.setPower(1);
+
+            TimeUnit.SECONDS.sleep(5);
+
+            leftMotor.setPower(0);
+            rightMotor.setPower(0);
+
+            TimeUnit.SECONDS.sleep(5);
+
 
             /*
 
