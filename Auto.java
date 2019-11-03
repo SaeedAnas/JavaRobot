@@ -4,6 +4,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -66,10 +67,17 @@ public class Auto extends LinearOpMode {
 
     private Servo foundationLeft;
 
+    private CRServo c;
+
+
     // IMU sensor variables
     private BNO055IMU imu;
     private Orientation lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
+
+    private void test() {
+        c.
+    }
 
 
 
@@ -141,7 +149,7 @@ public class Auto extends LinearOpMode {
 //                count++;
             releaseFoundation();
             sleep(1000);
-            encoderDrive(DRIVE_SPEED, -29, 2.0);
+            encoderDrive(DRIVE_SPEED, 20, 2.0);
             sleep(1000);
             grabFoundation();
             sleep(1000);
@@ -153,6 +161,9 @@ public class Auto extends LinearOpMode {
             encoderTurn(TURN_SPEED,-90, 5.0);
             encoderDrive(DRIVE_SPEED, 12, 5.0);
             encoderTurn(TURN_SPEED, -90,5.0);
+            encoderDrive(DRIVE_SPEED, -5, 5.0);
+            encoderTurn(TURN_SPEED, -90, 5.0);
+            encoderDrive(TURN_SPEED, 5, 5.0);
 
 
 
@@ -341,18 +352,17 @@ public class Auto extends LinearOpMode {
             rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
             runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-            rightMotor.setPower(Math.abs(power));
+
+            leftMotor.setPower(-power);
+            rightMotor.setPower(-power);
 
             while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
                     (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-                telemetry.addData("Path2",  "Running at %7d :%7d",
-                        leftMotor.getCurrentPosition(),
-                        rightMotor.getCurrentPosition());
-                telemetry.addData("LeftBusy", leftMotor.isBusy());
-                printStatus();
-
+                telemetry.addData("Left", "Running from %7d :%7d", leftMotor.getCurrentPosition(), newLeftTarget);
+                telemetry.addData("Right",  "Running at %7d :%7d", rightMotor.getCurrentPosition(), newRightTarget);
+                telemetry.addData("LeftIsBusy: ", leftMotor.isBusy());
+                telemetry.addData("RightIsBusy: ", rightMotor.isBusy());
+                telemetry.update();
 
             }
 
@@ -366,7 +376,7 @@ public class Auto extends LinearOpMode {
     }
 
     private void encoderDrive(double power, double distance, double timeOutS) {
-        encoderDrive(power, distance, distance, timeOutS);
+        encoderDrive(power, -distance, -distance, timeOutS);
     }
 
     // turn using encoder
