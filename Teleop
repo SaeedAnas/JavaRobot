@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 
-@TeleOp (name="Teleop", group="teloop")
+@TeleOp (name="Tele", group="teloop")
 public class Teleop extends LinearOpMode {
     //Hardware
     private DcMotor left, right, arm;
@@ -32,11 +32,13 @@ public class Teleop extends LinearOpMode {
     private void printStatus() {
         telemetry.addData("rightservo current position", rightFoundation.getPosition());
         telemetry.addData("leftservo current position", leftFoundation.getPosition());
-        telemetry.addData("armservo current position", grabber.getPosition());
-        telemetry.addData("y stick value:", gamepad1.right_stick_y);
-        telemetry.addData("x stick value:", gamepad1.right_stick_y);
-        telemetry.addData("y stick value:", gamepad1.right_stick_y);
+        //telemetry.addData("armservo current position", grabber.getPosition());
+        //telemetry.addData("y stick value:", gamepad1.right_stick_y);
+        //telemetry.addData("x stick value:", gamepad1.right_stick_y);
+       // telemetry.addData("y stick value:", gamepad1.right_stick_y);
+        telemetry.addData("x", gpad1x);
         telemetry.update();
+
 
     }
 
@@ -52,14 +54,14 @@ public class Teleop extends LinearOpMode {
         grabber = hardwareMap.get(Servo.class, "grabber");
         armServo = hardwareMap.get(CRServo.class, "armServo");
 
-        //buttons g1xButton, g1yButton, g2aButton,g2bButton,g2rightBump,g2leftBump;
-        gpad1x = gamepad1.x;
-        gpad1y=gamepad1.y;
-        gpad2a=gamepad2.a;
-        gpad2b=gamepad2.b;
-        gpad2rightBumper=gamepad2.right_bumper;
-        gpad2leftBumper=gamepad2.left_bumper;
 
+         //buttons g1xButton, g1yButton, g2aButton,g2bButton,g2rightBump,g2leftBump;
+         gpad1x=gamepad1.x;
+         gpad1y=gamepad1.y;
+         gpad2a=gamepad2.a;
+         gpad2b=gamepad2.b;
+         gpad2rightBumper=gamepad2.right_bumper;
+         gpad2leftBumper=gamepad2.left_bumper;
 
         // rightMotor is upside-down
         right.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -76,9 +78,12 @@ public class Teleop extends LinearOpMode {
 
             if (gpad1x) {
                 grabFoundation();
-            }
+
+
+               }
             if (gpad1y) {
                 releaseFoundation();
+                                            
             }
             if (gpad2a) {
                 servoRelease();
@@ -90,19 +95,20 @@ public class Teleop extends LinearOpMode {
             arm();//Arm function
 
             drive();//Drive function
-
-
-        }
+            telemetry.addData("rightservo current position", rightFoundation.getPosition());
+            telemetry.addData("leftservo current position", leftFoundation.getPosition());   printStatus();
+            telemetry.addData("x", gpad1x);        
+        }   telemetry.update();                    
 
     }
     // Foundation code
     private void releaseFoundation(){
-        rightFoundation.setPosition(LEFT_FOUNDATION_UP);
-        leftFoundation.setPosition(RIGHT_FOUNDATION_UP);
+        rightFoundation.setPosition(RIGHT_FOUNDATION_UP);
+        leftFoundation.setPosition(LEFT_FOUNDATION_UP);
     }
     private void grabFoundation(){
-        rightFoundation.setPosition(LEFT_FOUNDATION_DOWN);
-        leftFoundation.setPosition(RIGHT_FOUNDATION_DOWN);
+        rightFoundation.setPosition(RIGHT_FOUNDATION_DOWN);
+        leftFoundation.setPosition(LEFT_FOUNDATION_DOWN);
     }
 
     //Grabber code
@@ -136,6 +142,9 @@ public class Teleop extends LinearOpMode {
         double rightPower = -gamepad1.right_stick_y;
         right.setPower(rightPower /SLOW_DOWN);
     }
-}
 
+
+
+
+}
 
