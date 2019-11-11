@@ -30,6 +30,7 @@ public class Auto extends LinearOpMode {
 
     // runtime
     private ElapsedTime runtime = new ElapsedTime();
+    private ElapsedTime time = new ElapsedTime();
 
     // Encoder variables
     private static final double
@@ -44,13 +45,17 @@ public class Auto extends LinearOpMode {
             LEFT_FOUNDATION_UP = 0.9,
             RIGHT_FOUNDATION_DOWN = 0.6,
             RIGHT_FOUNDATION_UP = 0.1,
+            GRABBER_GRAB = 0.7,
+            GRABBER_RELEASE = 0.0,
             GEAR_IN = 32,
             GEAR_OUT = 16,
             GEAR_RATIO_ARM = GEAR_OUT/GEAR_IN,
             P_TICKS = 28,
             P_DISTANCE_PER_ROTATION = 20.8,
             TICKS_PER_MM_ARM = (GEAR_RATIO_ARM * COUNTS_PER_MOTOR_REV)/P_DISTANCE_PER_ROTATION,
-            BLOCK_HEIGHT_MM = 101.6;
+            TICKS_PER_INCH_ARM = TICKS_PER_MM_ARM / 25.4,
+            BLOCK_HEIGHT_MM = 101.6,
+            BLOCK_HEIGHT_INCHES = BLOCK_HEIGHT_MM / 25.4;
 
 
 
@@ -67,20 +72,13 @@ public class Auto extends LinearOpMode {
 
     private Servo foundationLeft;
 
-    private CRServo c;
+    private CRServo armServo;
 
 
     // IMU sensor variables
     private BNO055IMU imu;
     private Orientation lastAngles = new Orientation();
     double globalAngle, power = .30, correction;
-
-    private void test() {
-        c.
-    }
-
-
-
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -92,6 +90,7 @@ public class Auto extends LinearOpMode {
         foundationLeft = hardwareMap.get(Servo.class, "leftFoundation");
         foundationRight = hardwareMap.get(Servo.class, "rightFoundation");
         grabber = hardwareMap.get(Servo.class, "grabber");
+        armServo = hardwareMap.get(CRServo.class, "armServo");
 
         // rightMotor is upside-down
         leftMotor.setDirection(DcMotor.Direction.REVERSE);
@@ -118,79 +117,25 @@ public class Auto extends LinearOpMode {
         // run
         int count = 2;
         while (opModeIsActive()) {
-
              printStatus();
-//            // move to the foundation
-//            encoderDrive(DRIVE_SPEED, -DISTANCE_TO_FOUNDATION_START, 5.0);
-//            // set the foundation to grab the foundation
-//            setFoundationServo(FOUNDATION_SERVO_DEGREE);
-//            // move the foundation to the desired spot
-//            encoderDrive(DRIVE_SPEED, DISTANCE_TO_FOUNDATION_START, 5.0);
-//            // let go of the foundation
-//            setFoundationServo(0);
-//            // turn to get the first block
-//            encoderTurn(TURN_SPEED, -90, 5.0);
-//            // drive to the first block
-//            encoderDrive(DRIVE_SPEED, DISTANCE_TO_FIRST_BLOCK, 5.0);
-//            // get the block
-//            getBlock(90, -90, 5.0);
-//            // turn around
-//            encoderTurn(TURN_SPEED, 180, 5.0);
-//            // drive to foundation
-//            encoderDrive(DRIVE_SPEED, DISTANCE_TO_FOUNDATION_BLOCK, 5.0);
-//            // place block
-//            placeBlock(90, -90, 5.0);
-//                foundationLeft.setPosition(0.5);
-//                foundationLeft.setPosition(0.8);
-//                foundationRight.setPosition(0.5);
-//                foundationRight.setPosition(0.3);
-//                grabber.setPosition(0.3);
-//                grabber.setPosition(0.5);
-//                count++;
             releaseFoundation();
-            sleep(1000);
-            encoderDrive(DRIVE_SPEED, 20, 2.0);
-            sleep(1000);
+            whileDrive(DRIVE_SPEED, 30,30, 5.0);
             grabFoundation();
-            sleep(1000);
-            encoderDrive(1, 29, 5.0);
-            sleep(1000);
+            whileDrive(DRIVE_SPEED, -30, -30, 5.0);
             releaseFoundation();
+            encoderTurn(TURN_SPEED, 90,5.0);
             encoderTurn(TURN_SPEED, -90, 5.0);
-            encoderDrive(DRIVE_SPEED, 12, 5.0);
-            encoderTurn(TURN_SPEED,-90, 5.0);
-            encoderDrive(DRIVE_SPEED, 12, 5.0);
-            encoderTurn(TURN_SPEED, -90,5.0);
-            encoderDrive(DRIVE_SPEED, -5, 5.0);
-            encoderTurn(TURN_SPEED, -90, 5.0);
-            encoderDrive(TURN_SPEED, 5, 5.0);
-
-
-
-
-//
-//            encoderDrive(DRIVE_SPEED, 1, 2.0);
-//            sleep(1000);
-//            encoderDrive(DRIVE_SPEED,-1, 2.0);
-//            sleep(1000);
-//            encoderTurn(TURN_SPEED, 90, 5.0);
-//            sleep(1000);
-//            encoderTurn(TURN_SPEED, 90, 5.0);
-//            sleep(1000);
-//            encoderTurn(TURN_SPEED, -90, 5.0);
-//            sleep(1000);
-//            encoderTurn(TURN_SPEED, -90, 5.0);
-//            sleep(1000);
-//            moveArmMotor(-45, ARM_SPEED);
-//            sleep(1000);
-//            moveArmMotor(45,ARM_SPEED);
+            encoderTurn(TURN_SPEED, 180, 5.0);
+            encoderTurn(TURN_SPEED, -180, 5.0);
 
         }
         // stop
     }
 
-    private void getBlock() {
 
+
+    private void moveArmServo(double power) {
+        armServo.setPower(power);
     }
 
 //    private void moveArmVertical(double mm, double power){
@@ -302,8 +247,8 @@ public class Auto extends LinearOpMode {
         moveArmMotor(degreeUp,power);
     }
 
-    private void moveArmMotor(double degree, double power) {
-        int target = armMotor.getCurrentPosition() + (int)(COUNTS_PER_MOTOR_REV * (degree/360));
+    private void moveArmMotor(double mm, double power) {
+        int target = armMotor.getCurrentPosition() + (int)(mm * TICKS_PER_MM_ARM);
         armMotor.setTargetPosition(target);
         armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         armMotor.setPower(power);
@@ -345,35 +290,68 @@ public class Auto extends LinearOpMode {
             telemetry.addData("leftTarget", newLeftTarget);
             newRightTarget = rightMotor.getCurrentPosition() + (int)(rightInches * COUNTS_PER_INCH);
             telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newLeftTarget);
-            rightMotor.setTargetPosition(newRightTarget);
+
+            leftMotor.setTargetPosition(-newLeftTarget);
+            rightMotor.setTargetPosition(-newRightTarget);
+
+            leftMotor.setPower(power);
+            rightMotor.setPower(power);
 
             leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            runtime.reset();
-
-            leftMotor.setPower(-power);
-            rightMotor.setPower(-power);
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Left", "Running from %7d :%7d", leftMotor.getCurrentPosition(), newLeftTarget);
-                telemetry.addData("Right",  "Running at %7d :%7d", rightMotor.getCurrentPosition(), newRightTarget);
-                telemetry.addData("LeftIsBusy: ", leftMotor.isBusy());
-                telemetry.addData("RightIsBusy: ", rightMotor.isBusy());
-                telemetry.update();
-
-            }
-
             leftMotor.setPower(0);
             rightMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         }
 
 
     }
+    public void whileDrive(double power, double leftInches, double rightInches, double timeoutS) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        if (opModeIsActive()) {
+            newLeftTarget = leftMotor.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
+            newRightTarget = rightMotor.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+
+
+            if(leftInches < 0) {
+
+                leftMotor.setPower(power);
+                rightMotor.setPower(power);
+                while (opModeIsActive() && leftMotor.getCurrentPosition() > newLeftTarget && rightMotor.getCurrentPosition() > newRightTarget) {
+                   telemetry.addData("CurrentLeft: ", leftMotor.getCurrentPosition());
+                   telemetry.addData("TargetRight: ", newLeftTarget);
+                   telemetry.addData("CurrentRight: ", rightMotor.getCurrentPosition());
+                   telemetry.addData("TargetRight: ", newRightTarget);
+                   telemetry.update();
+                }
+                leftMotor.setPower(0);
+                rightMotor.setPower(0);
+            }
+            else {
+                leftMotor.setPower(-power);
+                rightMotor.setPower(-power);
+
+                while (opModeIsActive() && leftMotor.getCurrentPosition() < newLeftTarget && rightMotor.getCurrentPosition() < newRightTarget) {
+                    telemetry.addData("CurrentLeft: ", leftMotor.getCurrentPosition());
+                    telemetry.addData("TargetRight: ", newLeftTarget);
+                    telemetry.addData("CurrentRight: ", rightMotor.getCurrentPosition());
+                    telemetry.addData("TargetRight: ", newRightTarget);
+                    telemetry.update();
+                }
+                leftMotor.setPower(0);
+                rightMotor.setPower(0);
+            }
+
+
+        }
+
+        }
 
     private void encoderDrive(double power, double distance, double timeOutS) {
         encoderDrive(power, -distance, -distance, timeOutS);
