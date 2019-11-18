@@ -457,11 +457,11 @@ public class Auto extends LinearOpMode {
     }
 
     private void gyroRight(double power, int degrees) {
-        rotate(power, -degrees);
+        rotate(power, degrees);
     }
 
     private void gyroLeft(double power, int degrees) {
-        rotate(power, degrees );
+        rotate(power, -degrees );
     }
 
 
