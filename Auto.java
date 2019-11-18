@@ -400,8 +400,9 @@ public class Auto extends LinearOpMode {
         if (targetDegree < -180) {
 
             targetDegree = (targetDegree + 360);
-            leftMotor.setPower(power);
-            rightMotor.setPower(-power);
+            // TODO right turn - if this doesn't work the try replacing this with left turn
+            leftMotor.setPower(-power);
+            rightMotor.setPower(power);
             // current = -100 -> 260, target = 170, degree is < 0, so it will turn right;
             while(opModeIsActive() && (getAngle() + 360 > targetDegree)){
                 telemetry.addData("negative", 0);
@@ -430,8 +431,8 @@ public class Auto extends LinearOpMode {
         }
 
         else if (degrees < 0) {
-            leftMotor.setPower(power);
-            rightMotor.setPower(-power);
+            leftMotor.setPower(-power);
+            rightMotor.setPower(power);
             while(opModeIsActive() && (getAngle() > targetDegree)){
                 telemetry.addData("negative", 0);
                 telemetry.addData("targetDegree", targetDegree);
@@ -440,8 +441,8 @@ public class Auto extends LinearOpMode {
             }
 
         } else {
-            leftMotor.setPower(-power);
-            rightMotor.setPower(power);
+            leftMotor.setPower(power);
+            rightMotor.setPower(-power);
             while(opModeIsActive() && (getAngle() < targetDegree)){
                 telemetry.addData("+", 0);
                 telemetry.addData("targetDegree", targetDegree);
