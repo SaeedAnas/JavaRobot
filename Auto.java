@@ -391,20 +391,29 @@ public class Auto extends LinearOpMode {
         if(degrees == 0) {
             return;
         }
-
+        // degrees < 0 for left, degrees > 0 for right
         double targetDegree = getAngle() + degrees;
 
         // if the target degree < 180, we add 360 and make it positive
         // ex. getAngle() = -100, degrees = -90, -> targetDegree = -190, but the imu will not go to -190,
         // but instead become 180. In this case, we would want the imu to stop when the degree is 170, so -190 + 360 = 170!
+        // go left
         if (targetDegree < -180) {
-
-            targetDegree = (targetDegree + 360);
-            // TODO right turn - if this doesn't work the try replacing this with left turn
+            // targetDegree = -190 -> 170
+            // current = -100
+            targetDegree += 360;
             leftMotor.setPower(-power);
             rightMotor.setPower(power);
-            // current = -100 -> 260, target = 170, degree is < 0, so it will turn right;
-            while(opModeIsActive() && (getAngle() + 360 > targetDegree)){
+            // first wait until the angle has reached -180 and become 180
+            while(opModeIsActive() && (getAngle() < 0)){
+                telemetry.addData("negative", 0);
+                telemetry.addData("targetDegree", targetDegree);
+                telemetry.addData("angle", getAngle());
+                printStatus();
+            }
+            // then wait until the current angle becomes less than the targetDegree
+            // ex. if targetDegree is 170, then it will stop there.
+            while(opModeIsActive() && (getAngle() > targetDegree)){
                 telemetry.addData("negative", 0);
                 telemetry.addData("targetDegree", targetDegree);
                 telemetry.addData("angle", getAngle());
@@ -415,13 +424,22 @@ public class Auto extends LinearOpMode {
         // if the target degree > 180, we subtract 360 and make it negative
         // ex. getAngle() = 100, degrees = 90, -> targetDegree = 190, but the imu will not go to 190,
         // but instead become -180. In this case, we would want the imu to stop when the degree is -170, so 190 - 360 = -170!
+        // go right
         else if (targetDegree > 180) {
 
-            targetDegree = (targetDegree - 360);
+            targetDegree -= 360;
             leftMotor.setPower(power);
             rightMotor.setPower(-power);
-            // current = 100 -> -260, target = -170, degree > 0, so it will turn left;
-            while(opModeIsActive() && (getAngle() - 360 < targetDegree)){
+            // first wait until the current angle reaches 180 and goes to -180
+            while(opModeIsActive() && (getAngle() > 0)){
+                telemetry.addData("negative", 0);
+                telemetry.addData("targetDegree", targetDegree);
+                telemetry.addData("angle", getAngle());
+                printStatus();
+            }
+            // then wait until the current angle becomes more than the target degree
+            // ex. if targetDegree is -170, then the robot will stop after the angle is greater than -170
+            while(opModeIsActive() && (getAngle() < targetDegree)){
                 telemetry.addData("negative", 0);
                 telemetry.addData("targetDegree", targetDegree);
                 telemetry.addData("angle", getAngle());
@@ -429,7 +447,7 @@ public class Auto extends LinearOpMode {
             }
 
         }
-
+        // go left
         else if (degrees < 0) {
             leftMotor.setPower(-power);
             rightMotor.setPower(power);
@@ -440,7 +458,9 @@ public class Auto extends LinearOpMode {
                 printStatus();
             }
 
-        } else {
+        }
+        // go right
+        else {
             leftMotor.setPower(power);
             rightMotor.setPower(-power);
             while(opModeIsActive() && (getAngle() < targetDegree)){
