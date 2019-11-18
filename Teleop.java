@@ -5,12 +5,17 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 
 @TeleOp (name="tele", group="teloop")
-public class tele extends LinearOpMode {
+public class Teleop extends LinearOpMode {
     //Hardware
     private DcMotor left, right, arm;
     private Servo rightFoundation, leftFoundation, grabber;
@@ -25,26 +30,53 @@ public class tele extends LinearOpMode {
             SERVO_RELEASE = 0,
             FULL_SPEED=1,
             ZERO_SPEED=0,
-            SLOW_DOWN = 1;
+            SLOW_DOWN = 1.2;
+    private BNO055IMU imu;
+    private Orientation OriginAngle = new Orientation();
+    private double deltaAngle;
     //boolean
     boolean   gpad1x, gpad1y, gpad2a,gpad2b,gpad2rightBumper,gpad2leftBumper;
 
+//    private void printStatus() {
+//        telemetry.addData("rightservo current position", rightFoundation.getPosition());
+//        telemetry.addData("leftservo current position", leftFoundation.getPosition());
+//        //telemetry.addData("armservo current position", grabber.getPosition());
+//        //telemetry.addData("y stick value:", gamepad1.right_stick_y);
+//        //telemetry.addData("x stick value:", gamepad1.right_stick_y);
+//        // telemetry.addData("y stick value:", gamepad1.right_stick_y);
+//        telemetry.addData("x", gpad1x);
+//        telemetry.update();
+//
+//
+//    }
+
+    private void initImu() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled = false;
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        imu.initialize(parameters);
+    }
+
     private void printStatus() {
-        telemetry.addData("rightservo current position", rightFoundation.getPosition());
-        telemetry.addData("leftservo current position", leftFoundation.getPosition());
-        //telemetry.addData("armservo current position", grabber.getPosition());
-        //telemetry.addData("y stick value:", gamepad1.right_stick_y);
-        //telemetry.addData("x stick value:", gamepad1.right_stick_y);
-        // telemetry.addData("y stick value:", gamepad1.right_stick_y);
-        telemetry.addData("x", gpad1x);
+        telemetry.addData("X", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).firstAngle);
+        telemetry.addData("Y", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).secondAngle);
+        telemetry.addData("Z", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).thirdAngle);
+        telemetry.addData("Origin", OriginAngle.firstAngle);
+        telemetry.addData("DeltaAngle", deltaAngle);
         telemetry.update();
-
-
     }
 
 
     @Override
     public void runOpMode() throws InterruptedException {
+
+        initImu();
         //Init hardware
         left = hardwareMap.get(DcMotor.class, "left");
         right = hardwareMap.get(DcMotor.class, "right");
@@ -75,7 +107,7 @@ public class tele extends LinearOpMode {
         // wait for play
         waitForStart();
         while (opModeIsActive()) {
-
+       // printStatus();
             if (gamepad1.x) {
 
                 rightFoundation.setPosition(0.6);
@@ -95,22 +127,32 @@ public class tele extends LinearOpMode {
                 grabber.setPosition(0);
             }
             if (gamepad2.x) {
-                armServo.setPower(0.5);
+                armServo.setPower(0.7);
 
             }
             else if (gamepad2.y) {
-               armServo.setPower(-0.5);
+                armServo.setPower(-0.7);
             } else {
 
                 armServo.setPower(0);
             }
-            arm();//Arm function
+            if (gamepad2.right_trigger>0.5){
+                arm.setPower(1);
+
+            } else if (gamepad2.left_trigger>0.5) {
+               arm.setPower(-1);
+            } else {
+
+                arm.setPower(0);
+            }
+            //arm();//Arm function
 
             drive();//Drive function
             telemetry.addData("grabber",armServo.getDirection());
             telemetry.addData("leftbumper",gamepad2.left_bumper);
             telemetry.addData("gamepad2x",gamepad2.x);
-
+            telemetry.addData("left trigger",gamepad2.left_trigger);
+            telemetry.addData("right trigger",gamepad2.right_trigger);
             telemetry.update();
         }
 
@@ -145,6 +187,10 @@ public class tele extends LinearOpMode {
             armServo.setPower(ZERO_SPEED);
         }
 
+
+
+
+
         arm.setPower(gamepad2.left_trigger);
         arm.setPower(-gamepad2.right_trigger);
     }
@@ -161,4 +207,3 @@ public class tele extends LinearOpMode {
 
 
 }
-
