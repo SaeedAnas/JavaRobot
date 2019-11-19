@@ -6,17 +6,12 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
-import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
-
-import java.util.concurrent.TimeUnit;
-
 // Docs
 // https://ftctechnh.github.io/ftc_app/doc/javadoc/org/firstinspires/ftc/robotcore/external/navigation/package-summary.html
 
@@ -27,11 +22,9 @@ public class Auto extends LinearOpMode {
 
     // runtime
     private ElapsedTime runtime = new ElapsedTime();
-    private ElapsedTime time = new ElapsedTime();
 
     // Encoder variables
     private static final double
-            ROBOT_WIDTH = 18,
             ROBOT_LENGTH = 18,
             TILE_LENGTH = 23.75,
             COUNTS_PER_MOTOR_REV = 1440,
@@ -40,7 +33,7 @@ public class Auto extends LinearOpMode {
             COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI),
             DRIVE_SPEED = 0.4,
             TURN_SPEED = 0.3,
-            ARM_SPEED = 0.3,
+            //ARM_SPEED = 0.3,
             LEFT_FOUNDATION_DOWN = 0.4,
             LEFT_FOUNDATION_UP = 0.9,
             RIGHT_FOUNDATION_DOWN = 0.6,
@@ -50,13 +43,14 @@ public class Auto extends LinearOpMode {
             GEAR_IN = 32,
             GEAR_OUT = 16,
             GEAR_RATIO_ARM = GEAR_OUT/GEAR_IN,
-            P_TICKS = 28,
+           // P_TICKS = 28,
             P_DISTANCE_PER_ROTATION = 20.8,
-            TICKS_PER_MM_ARM = (GEAR_RATIO_ARM * COUNTS_PER_MOTOR_REV)/P_DISTANCE_PER_ROTATION,
-            TICKS_PER_INCH_ARM = TICKS_PER_MM_ARM / 25.4,
-            BLOCK_HEIGHT_MM = 101.6,
-            BLOCK_HEIGHT_INCHES = BLOCK_HEIGHT_MM / 25.4,
-            TIME_FOR_HORIZONTAL_ARM = 7;
+            TICKS_PER_MM_ARM = (GEAR_RATIO_ARM * COUNTS_PER_MOTOR_REV)/P_DISTANCE_PER_ROTATION
+            //TICKS_PER_INCH_ARM = TICKS_PER_MM_ARM / 25.4,
+            //BLOCK_HEIGHT_MM = 101.6,
+            //BLOCK_HEIGHT_INCHES = BLOCK_HEIGHT_MM / 25.4,
+            //TIME_FOR_HORIZONTAL_ARM = 7
+            ;
 
 
 
@@ -65,7 +59,9 @@ public class Auto extends LinearOpMode {
 
     private DcMotor rightMotor;
 
-    private DcMotor armMotor;
+    private DcMotor armMotorLeft;
+
+    private DcMotor armMotorRight;
 
     private Servo grabber;
 
@@ -77,18 +73,16 @@ public class Auto extends LinearOpMode {
 
     // IMU sensor variables
     private BNO055IMU imu;
-    private Orientation OriginAngle = new Orientation();
-    private double deltaAngle;
-    double globalAngle, power = .30, correction;
 
     @Override
-    public void runOpMode() throws InterruptedException {
+    public void runOpMode() {
 
         //Init the hardware
         initImu();
         leftMotor = hardwareMap.get(DcMotor.class, "left");
         rightMotor = hardwareMap.get(DcMotor.class, "right");
-        armMotor = hardwareMap.get(DcMotor.class,"arm");
+        armMotorLeft = hardwareMap.get(DcMotor.class,"armLeft");
+        armMotorRight = hardwareMap.get(DcMotor.class, "armRight");
         foundationLeft = hardwareMap.get(Servo.class, "leftFoundation");
         foundationRight = hardwareMap.get(Servo.class, "rightFoundation");
         grabber = hardwareMap.get(Servo.class, "grabber");
@@ -128,41 +122,45 @@ public class Auto extends LinearOpMode {
     }
 
     private void red() {
-        foundation(1);
-    }
-
-    private void blue() {
         foundation(-1);
     }
 
+    private void blue() {
+        foundation(1);
+    }
+
     private void block() {
-    encoderTurnRight(TURN_SPEED, 90, 5.0);
-    whileDrive(DRIVE_SPEED, TILE_LENGTH * 3, 5.0);
-    encoderTurnLeft(TURN_SPEED, 90, 5.0);
-    whileDrive(DRIVE_SPEED, 90, 5.0);
+
+    whileDrive(DRIVE_SPEED, TILE_LENGTH * 3);
+
+    whileDrive(DRIVE_SPEED, 90);
 
     }
 
     private void foundation(int team) {
         releaseFoundation();
-        whileDrive(-DRIVE_SPEED, -((TILE_LENGTH*2) - ROBOT_LENGTH), 5.0);
+        whileDrive(-DRIVE_SPEED, -((TILE_LENGTH*2) - ROBOT_LENGTH));
         grabFoundation();
-        whileDrive(DRIVE_SPEED,50,5.0);
+        whileDrive(DRIVE_SPEED,50);
         releaseFoundation();
-        gyroLeft(TURN_SPEED, 90 * team);
-        whileDrive(DRIVE_SPEED, TILE_LENGTH, 5.0);
-        gyroLeft(TURN_SPEED, 90 * team);
-        whileDrive(DRIVE_SPEED, 18.5 + ROBOT_LENGTH, 5.0);
-        gyroLeft(TURN_SPEED, 90 * team);
-        whileDrive(DRIVE_SPEED, 34.25/2, 5.0);
-        gyroLeft(TURN_SPEED, 90 * team);
-        whileDrive(DRIVE_SPEED, TILE_LENGTH, 5.0);
+        rotate(TURN_SPEED, 90 * team);
+        whileDrive(DRIVE_SPEED, TILE_LENGTH);
+        rotate(TURN_SPEED, 90 * team);
+        whileDrive(DRIVE_SPEED, 18.5 + ROBOT_LENGTH);
+        rotate(TURN_SPEED, 90 * team);
+        whileDrive(DRIVE_SPEED, 34.25/2);
+        rotate(TURN_SPEED, 90 * team);
+        whileDrive(DRIVE_SPEED, TILE_LENGTH);
     }
 
+    // if all else fails...
 
-    private void moveArmServo(double power) {
-        armServo.setPower(power);
+    private void planB() {
+        sleep(20000);
+        rotate(TURN_SPEED, 90);
+        whileDrive(DRIVE_SPEED, TILE_LENGTH);
     }
+
 
 
     // Foundation code
@@ -178,15 +176,19 @@ public class Auto extends LinearOpMode {
     // arm code
 
     private void moveArmMotor(double mm, double power) {
-        int target = armMotor.getCurrentPosition() + (int)(mm * TICKS_PER_MM_ARM);
-        armMotor.setTargetPosition(target);
-        armMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        armMotor.setPower(power);
+        int target = armMotorLeft.getCurrentPosition() + (int)(mm * TICKS_PER_MM_ARM);
+        armMotorLeft.setTargetPosition(target);
+        armMotorRight.setTargetPosition(target);
+        armMotorLeft.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotorRight.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        armMotorLeft.setPower(power);
+        armMotorRight.setPower(power);
         while (opModeIsActive() &&
-                (armMotor.isBusy())) {
+                (armMotorLeft.isBusy() && armMotorRight.isBusy())) {
             printStatus();
         }
-        armMotor.setPower(0);
+        armMotorLeft.setPower(0);
+        armMotorRight.setPower(0);
     }
 
     // TODO find the hold and release position;
@@ -203,13 +205,13 @@ public class Auto extends LinearOpMode {
 
     }
 
-    public void whileDrive(double power, double distance, double timeoutS) {
-        whileDrive(power, distance,distance, timeoutS);
+    private void whileDrive(double power, double distance) {
+        whileDrive(power, distance, distance);
 
     }
 
     // Drive Using Encoder
-    public void whileDrive(double power, double leftInches, double rightInches, double timeoutS) {
+    private void whileDrive(double power, double leftInches, double rightInches) {
         int newLeftTarget;
         int newRightTarget;
 
@@ -257,99 +259,99 @@ public class Auto extends LinearOpMode {
         }
 
 
-
-
-    public void resetEncoder() {
-        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-    }
-
-    public void encoderTurnLeft(double power, double degree, double timeoutS) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        resetEncoder();
-
-        if (opModeIsActive()) {
-            newLeftTarget = -leftMotor.getCurrentPosition() + (int)calcTurn(degree);
-            telemetry.addData("leftTarget", newLeftTarget);
-            newRightTarget = rightMotor.getCurrentPosition() - (int)calcTurn(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newLeftTarget);
-            rightMotor.setTargetPosition(newRightTarget);
-
-
-            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-            rightMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-                telemetry.addData("Path2",  "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-
-            leftMotor.setPower(0);
-            rightMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
-        }
-
-
-    }
-
-    public void encoderTurnRight(double power, double degree, double timeoutS) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        resetEncoder();
-
-
-        if (opModeIsActive()) {
-            newLeftTarget = leftMotor.getCurrentPosition() - (int)calcTurn(degree);
-            telemetry.addData("leftTarget", newLeftTarget);
-            newRightTarget = -rightMotor.getCurrentPosition() + (int)calcTurn(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newLeftTarget);
-            rightMotor.setTargetPosition(newRightTarget);
-
-
-            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-            rightMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-                telemetry.addData("Path2",  "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-
-            leftMotor.setPower(0);
-            rightMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
-        }
-
-
-    }
-
-    private double calcTurn(double degree) {
-        return (Math.PI * ROBOT_WIDTH * (degree / 360)) * COUNTS_PER_INCH;
-    }
+//
+//
+//    public void resetEncoder() {
+//        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//    }
+//
+//    public void encoderTurnLeft(double power, double degree, double timeoutS) {
+//        int newLeftTarget;
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//        if (opModeIsActive()) {
+//            newLeftTarget = -leftMotor.getCurrentPosition() + (int)calcTurn(degree);
+//            telemetry.addData("leftTarget", newLeftTarget);
+//            newRightTarget = rightMotor.getCurrentPosition() - (int)calcTurn(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            leftMotor.setTargetPosition(newLeftTarget);
+//            rightMotor.setTargetPosition(newRightTarget);
+//
+//
+//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            leftMotor.setPower(Math.abs(power));
+//            rightMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
+//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
+//                telemetry.addData("Path2",  "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//
+//            leftMotor.setPower(0);
+//            rightMotor.setPower(0);
+//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//
+//
+//    }
+//
+//    public void encoderTurnRight(double power, double degree, double timeoutS) {
+//        int newLeftTarget;
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//
+//        if (opModeIsActive()) {
+//            newLeftTarget = leftMotor.getCurrentPosition() - (int)calcTurn(degree);
+//            telemetry.addData("leftTarget", newLeftTarget);
+//            newRightTarget = -rightMotor.getCurrentPosition() + (int)calcTurn(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            leftMotor.setTargetPosition(newLeftTarget);
+//            rightMotor.setTargetPosition(newRightTarget);
+//
+//
+//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            leftMotor.setPower(Math.abs(power));
+//            rightMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
+//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
+//                telemetry.addData("Path2",  "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//
+//            leftMotor.setPower(0);
+//            rightMotor.setPower(0);
+//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//
+//
+//    }
+//
+//    private double calcTurn(double degree) {
+//        return (Math.PI * ROBOT_WIDTH * (degree / 360)) * COUNTS_PER_INCH;
+//    }
 
     // prints the imu status and all motor statuses
     private void printStatus() {
@@ -358,7 +360,8 @@ public class Auto extends LinearOpMode {
         telemetry.addData("Z",imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.YXZ, AngleUnit.DEGREES).thirdAngle);
         telemetry.addData("LeftMotor", leftMotor.getCurrentPosition());
         telemetry.addData("RightMotor", rightMotor.getCurrentPosition());
-        telemetry.addData("armMotor", armMotor.getCurrentPosition());
+        telemetry.addData("armMotorLeft", armMotorLeft.getCurrentPosition());
+        telemetry.addData("armMotorRight", armMotorRight.getCurrentPosition());
         telemetry.addData("grabber", grabber.getPosition());
         telemetry.addData("foundationLeft", foundationLeft.getPosition());
         telemetry.addData("foundationRight", foundationRight.getPosition());
