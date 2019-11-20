@@ -17,7 +17,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @TeleOp (name="tele", group="teloop")
 public class Teleop extends LinearOpMode {
     //Hardware
-    private DcMotor left, right, arm;
+    private DcMotor left, right, arm, arm2;
     private Servo rightFoundation, leftFoundation, grabber;
     private CRServo armServo;
     //Constants
@@ -30,7 +30,7 @@ public class Teleop extends LinearOpMode {
             SERVO_RELEASE = 0,
             FULL_SPEED=1,
             ZERO_SPEED=0,
-            SLOW_DOWN = 1.2;
+            SLOW_DOWN = 1.3;
     private BNO055IMU imu;
     private Orientation OriginAngle = new Orientation();
     private double deltaAngle;
@@ -80,7 +80,8 @@ public class Teleop extends LinearOpMode {
         //Init hardware
         left = hardwareMap.get(DcMotor.class, "left");
         right = hardwareMap.get(DcMotor.class, "right");
-        arm = hardwareMap.get(DcMotor.class, "arm");
+        arm = hardwareMap.get(DcMotor.class, "armLeft");
+        arm2 =hardwareMap.get(DcMotor.class,"armRight");
         rightFoundation = hardwareMap.get(Servo.class, "rightFoundation");
         leftFoundation = hardwareMap.get(Servo.class, "leftFoundation");
         grabber = hardwareMap.get(Servo.class, "grabber");
@@ -97,12 +98,12 @@ public class Teleop extends LinearOpMode {
 
         // rightMotor is upside-down
         right.setDirection(DcMotorSimple.Direction.REVERSE);
-
+        arm2.setDirection(DcMotorSimple.Direction.REVERSE);
         //zero power behavior
         left.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         right.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         arm.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
+        arm2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
         // wait for play
         waitForStart();
@@ -138,12 +139,15 @@ public class Teleop extends LinearOpMode {
             }
             if (gamepad2.right_trigger>0.5){
                 arm.setPower(1);
+                arm2.setPower(1);
 
             } else if (gamepad2.left_trigger>0.5) {
                arm.setPower(-1);
+               arm2.setPower(-1);
             } else {
 
                 arm.setPower(0);
+                arm2.setPower(0);
             }
             //arm();//Arm function
 
@@ -197,10 +201,14 @@ public class Teleop extends LinearOpMode {
 
     //Drive Code
     private void drive(){
+
         double leftPower = gamepad1.right_stick_y;
-        left.setPower(leftPower /SLOW_DOWN);
         double rightPower = gamepad1.left_stick_y;
-        right.setPower(rightPower /SLOW_DOWN);
+
+            right.setPower(rightPower/SLOW_DOWN);
+            left.setPower(leftPower /SLOW_DOWN);
+
+
     }
 
 
