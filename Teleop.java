@@ -30,10 +30,12 @@ public class Teleop extends LinearOpMode {
             SERVO_RELEASE = 0,
             FULL_SPEED=1,
             ZERO_SPEED=0,
-            SLOW_DOWN = 1.3;
+            SLOW_DOWN1 = 1.3,
+            SLOW_DOWN2 = 1.5;
     private BNO055IMU imu;
     private Orientation OriginAngle = new Orientation();
     private double deltaAngle;
+    private int driver = 0;
     //boolean
     boolean   gpad1x, gpad1y, gpad2a,gpad2b,gpad2rightBumper,gpad2leftBumper;
 
@@ -65,10 +67,6 @@ public class Teleop extends LinearOpMode {
 
     private void printStatus() {
         telemetry.addData("X", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).firstAngle);
-        telemetry.addData("Y", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).secondAngle);
-        telemetry.addData("Z", imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES).thirdAngle);
-        telemetry.addData("Origin", OriginAngle.firstAngle);
-        telemetry.addData("DeltaAngle", deltaAngle);
         telemetry.update();
     }
 
@@ -76,7 +74,7 @@ public class Teleop extends LinearOpMode {
     @Override
     public void runOpMode() throws InterruptedException {
 
-        initImu();
+        //initImu();
         //Init hardware
         left = hardwareMap.get(DcMotor.class, "left");
         right = hardwareMap.get(DcMotor.class, "right");
@@ -108,7 +106,7 @@ public class Teleop extends LinearOpMode {
         // wait for play
         waitForStart();
         while (opModeIsActive()) {
-       // printStatus();
+        //printStatus();
             if (gamepad1.x) {
 
                 rightFoundation.setPosition(0.6);
@@ -138,12 +136,12 @@ public class Teleop extends LinearOpMode {
                 armServo.setPower(0);
             }
             if (gamepad2.right_trigger>0.5){
-                arm.setPower(1);
-                arm2.setPower(1);
+                arm.setPower(-1);
+                arm2.setPower(-1);
 
             } else if (gamepad2.left_trigger>0.5) {
-               arm.setPower(-1);
-               arm2.setPower(-1);
+               arm.setPower(1);
+               arm2.setPower(1);
             } else {
 
                 arm.setPower(0);
@@ -201,17 +199,47 @@ public class Teleop extends LinearOpMode {
 
     //Drive Code
     private void drive(){
+            double leftPower1 = gamepad1.right_stick_y;
+            double rightPower1 = gamepad1.left_stick_y;
+            double leftPower2 = gamepad2.right_stick_y;
+            double rightPower2 = gamepad2.left_stick_y;
 
-        double leftPower = gamepad1.right_stick_y;
-        double rightPower = gamepad1.left_stick_y;
+            if(driver == 0) {
+                if(leftPower1 != 0 || rightPower1 != 0) {
+                    right.setPower(rightPower1/SLOW_DOWN1);
+                    left.setPower(leftPower1/SLOW_DOWN1);
+                    driver = 1;
+                } else if (leftPower2 != 0 || rightPower2 != 0) {
+                    right.setPower(rightPower2/SLOW_DOWN2);
+                    left.setPower(leftPower2/ SLOW_DOWN2);
+                    driver = 2;
+                }
+            } else if (driver == 1) {
+                if(leftPower1 != 0 || rightPower1 != 0) {
+                    right.setPower(rightPower1/SLOW_DOWN1);
+                    left.setPower(leftPower1/SLOW_DOWN1);
+                }
+                else {
+                    driver = 0;
+                    left.setPower(0);
+                    right.setPower(0);
+                }
+            } else if (driver == 2){
+                if (leftPower2 != 0 || rightPower2 != 0) {
+                    right.setPower(rightPower2/SLOW_DOWN2);
+                    left.setPower(leftPower2/ SLOW_DOWN2);
+                } else {
+                    driver = 0;
+                    left.setPower(0);
+                    right.setPower(0);
+                }
+            }
 
-            right.setPower(rightPower/SLOW_DOWN);
-            left.setPower(leftPower /SLOW_DOWN);
+
+
+
+
 
 
     }
-
-
-
-
 }
