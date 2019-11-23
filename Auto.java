@@ -73,25 +73,15 @@ public class Auto extends LinearOpMode {
 
     private CRServo armServo;
 
-    // IMU sensor variables
+    private BNO055IMU imu;
+
+    Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+
+
 
     @Override
     public void runOpMode() {
 
-//        //Init the hardware
-//        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
-//        parameters.mode = BNO055IMU.SensorMode.IMU;
-//        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
-//        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
-//        parameters.loggingEnabled = false;
-//        imu = hardwareMap.get(BNO055IMU.class,"imu");
-//        imu.initialize(parameters);
-//        telemetry.addData("Mode", "calibrating...");
-//        telemetry.update();
-//        while(!isStopRequested() && !imu.isGyroCalibrated()) {
-//            sleep(50);
-//            idle();
-//        }
         leftMotor = hardwareMap.get(DcMotor.class, "left");
         rightMotor = hardwareMap.get(DcMotor.class, "right");
         armMotorLeft = hardwareMap.get(DcMotor.class,"armLeft");
@@ -121,11 +111,29 @@ public class Auto extends LinearOpMode {
 
         // run
         while (opModeIsActive()) {
-            blue();
+            foundation2();
         }
         // stop
     }
 
+    private void foundation2 () {
+        // make sure the foundation isnt in the way
+        releaseFoundation();
+        // go back
+        whileDrive(-DRIVE_SPEED, -((TILE_LENGTH*2) - ROBOT_LENGTH));
+        // grab the foundation
+        grabFoundation();
+        // drive straight
+        whileDrive(DRIVE_SPEED,TILE_LENGTH);
+        // turn the foundation left
+        encoderTurnLeft(TURN_SPEED, 110, 5.0);
+        // go back into the area
+        whileDrive(-DRIVE_SPEED, -30);
+        // release the foundation
+        releaseFoundation();
+        // drive under the bridge
+        whileDrive(DRIVE_SPEED, TILE_LENGTH*2);
+    }
     private void red() {
         // back: 31 inches
         // front:
@@ -448,6 +456,74 @@ public class Auto extends LinearOpMode {
         telemetry.addData("ArmServo", armServo.getPower());
         telemetry.addData("Time", runtime.seconds());
         telemetry.update();
+    }
+
+    private void initImu() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+        parameters.mode                = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit           = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit           = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled      = false;
+
+        // Retrieve and initialize the IMU. We expect the IMU to be attached to an I2C port
+        // on a Core Device Interface Module, configured to be a sensor of type "AdaFruit IMU",
+        // and named "imu".
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+        imu.initialize(parameters);
+        telemetry.addData("Mode", "calibrating...");
+        telemetry.update();
+        // make sure the imu gyro is calibrated before continuing.
+        while (!isStopRequested() && !imu.isGyroCalibrated())
+        {
+            sleep(50);
+            idle();
+        }
+        telemetry.addData("Mode", "waiting for start");
+        telemetry.addData("imu calib status", imu.getCalibrationStatus().toString());
+        telemetry.update();
+    }
+
+    private double getGyroXAngle() {
+        angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        return (angles.firstAngle);
+    }
+
+    private double adjustedAngle(double zeroReference, double currentAngle) {
+        double adjusted = currentAngle - zeroReference;
+        if (adjusted < -179) {
+            adjusted += 360;
+        } else if (adjusted > 180) {
+            adjusted -= 360;
+        }
+        return adjusted;
+    }
+
+    private void turnLeftByGyro (double motorPower, int targetDegree) {
+        double zeroReference = getGyroXAngle();
+        double angleTurned = 0;
+        rightMotor.setPower(motorPower);
+        leftMotor.setPower(-motorPower);
+        while( opModeIsActive() && (angleTurned < targetDegree))
+        {
+            double currentAngle = getGyroXAngle();
+            angleTurned = adjustedAngle(zeroReference, currentAngle);
+        }
+        rightMotor.setPower(0);
+        leftMotor.setPower(0);
+    }
+
+    private void turnRightByGyro (double motorPower, int targetDegree) {
+        double zeroReference = getGyroXAngle();
+        double angleTurned = 0;
+        rightMotor.setPower(motorPower);
+        leftMotor.setPower(-motorPower);
+        while( opModeIsActive() && (angleTurned > (-targetDegree)))
+        {
+            double currentAngle = getGyroXAngle();
+            angleTurned = adjustedAngle(zeroReference, currentAngle);
+        }
+        rightMotor.setPower(0);
+        leftMotor.setPower(0);
     }
 
 //    private void initImu() {
