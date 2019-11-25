@@ -20,21 +20,21 @@ abstract class Block extends Autonomous {
     private void grabBlock(char team) {
         checkTeam(team);
         release();
-        whileArm(20, 0.3);
+        whileArm(20, ARM_SPEED);
         sleep(500);
         drive(DRIVE_SPEED, (TILE_LENGTH * 2) - ROBOT_LENGTH);
         sleep(500);
-        whileArm(-10, 0.3);
+        whileArm(-10, ARM_SPEED + 0.1);
         sleep(500);
         grab();
         sleep(500);
         drive(-DRIVE_SPEED, -((TILE_LENGTH * 2) - ROBOT_LENGTH));
-        encoderTurn(0.2, -95 * turnVal, 5.0);
+        turnByGyro(0.2, -95 * turnVal);
         drive(DRIVE_SPEED, 10);
         release();
     }
 
-    public void currentBlock(char team) {
+     void currentBlock(char team) {
         grabBlock(team);
     }
 }
