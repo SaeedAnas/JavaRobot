@@ -1,9 +1,13 @@
 package org.firstinspires.ftc.teamcode.auto;
 
+import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
-import com.qualcomm.robotcore.util.ElapsedTime;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
+import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
+import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
 import static org.firstinspires.ftc.teamcode.auto.Constants.*;
 
@@ -24,11 +28,12 @@ public abstract class Autonomous extends LinearOpMode {
 
     private static Servo foundationLeft;
 
+    private BNO055IMU imu;
+
     // private static CRServo armServo;
 
-    private ElapsedTime runtime = new ElapsedTime();
-
-    public void initHardware() {
+    protected void initHardware() {
+        initImu();
         leftMotor = hardwareMap.get(DcMotor.class, "left");
         rightMotor = hardwareMap.get(DcMotor.class, "right");
         armMotorLeft = hardwareMap.get(DcMotor.class, "armLeft");
@@ -49,12 +54,34 @@ public abstract class Autonomous extends LinearOpMode {
         // set motor to run using encoder
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
+        telemetry.addData("Ready!", "Press Start.");
         // wait for play
         waitForStart();
     }
 
-    public void brake() {
+    private void initImu() {
+        BNO055IMU.Parameters parameters = new BNO055IMU.Parameters();
+
+        parameters.mode = BNO055IMU.SensorMode.IMU;
+        parameters.angleUnit = BNO055IMU.AngleUnit.DEGREES;
+        parameters.accelUnit = BNO055IMU.AccelUnit.METERS_PERSEC_PERSEC;
+        parameters.loggingEnabled = false;
+
+        imu = hardwareMap.get(BNO055IMU.class, "imu");
+
+        imu.initialize(parameters);
+
+        while (!isStopRequested() && !imu.isGyroCalibrated()) {
+            telemetry.addData("Mode", "calibrating...");
+            telemetry.update();
+        }
+        telemetry.addData("Mode", "waiting for start");
+        telemetry.addData("imu calibration status", imu.getCalibrationStatus().toString());
+        telemetry.update();
+    }
+
+
+    protected void brake() {
         rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -62,26 +89,26 @@ public abstract class Autonomous extends LinearOpMode {
     }
 
     // Foundation code
-    public void grabFoundation() {
+    protected void grabFoundation() {
         foundationLeft.setPosition(LEFT_FOUNDATION_DOWN);
         foundationRight.setPosition(RIGHT_FOUNDATION_DOWN);
     }
 
-    public void releaseFoundation() {
+    protected void releaseFoundation() {
         foundationLeft.setPosition(LEFT_FOUNDATION_UP);
         foundationRight.setPosition(RIGHT_FOUNDATION_UP);
     }
 
-    public void grab() {
+    protected void grab() {
         grabber.setPosition(GRABBER_GRAB);
     }
 
-    public void release() {
+    protected void release() {
         grabber.setPosition(GRABBER_RELEASE);
     }
 
     // arm code
-    public void whileArm(double mm, double power) {
+    protected void whileArm(double mm, double power) {
         double target = ((armMotorLeft.getCurrentPosition() + (mm * TICKS_PER_MM_ARM)) + (armMotorRight.getCurrentPosition() + (mm * TICKS_PER_MM_ARM))) / 2;
         if (mm < 0) {
             armMotorLeft.setPower(-power);
@@ -106,13 +133,13 @@ public abstract class Autonomous extends LinearOpMode {
         }
     }
 
-    public void drive(double power, double distance) {
+    protected void drive(double power, double distance) {
         drive(power, distance, distance);
 
     }
 
     // Drive Using Encoder
-    public void drive(double power, double leftInches, double rightInches) {
+    private void drive(double power, double leftInches, double rightInches) {
         int newLeftTarget;
         int newRightTarget;
 
@@ -157,175 +184,248 @@ public abstract class Autonomous extends LinearOpMode {
 
     }
 
-    private void resetEncoder() {
-        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+// 179 -> -179
+// y value
+// right decreasing
+// left increasing
+
+    private double getGyroYAngle() {
+        Orientation angles = imu.getAngularOrientation(AxesReference.INTRINSIC, AxesOrder.XYZ, AngleUnit.DEGREES);
+        return (angles.secondAngle);
     }
 
-    public void encoderTurn(double power, double degree, double timeoutS) {
-        if (degree < 0) {
-            encoderTurnLeft(power, -degree, timeoutS);
+    private double adjustedAngle(double zeroReference, double currentAngle) {
+        double adjusted = currentAngle - zeroReference;
+        if (adjusted < -179) {
+            adjusted += 360;
+        } else if (adjusted > 180) {
+            adjusted -= 360;
+        }
+        return adjusted;
+    }
+
+    protected void turnByGyro(double motorPower, double targetDegree) {
+        if (targetDegree < 0) {
+            turnLeftByGyro(motorPower, -(targetDegree - CORRECTION));
         } else {
-            encoderTurnRight(power, degree, timeoutS);
-        }
-    }
-
-    public void encoderTurnOneWheel(double power, double degree, double timeoutS) {
-        if (degree < 0) {
-            encoderTurnLeftOne(power, degree, timeoutS);
-        } else {
-            encoderTurnRightOne(power, degree, timeoutS);
-        }
-    }
-
-    public void encoderTurnLeft(double power, double degree, double timeoutS) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        resetEncoder();
-
-        if (opModeIsActive()) {
-            newLeftTarget = -leftMotor.getCurrentPosition() + (int) calcTurn(degree);
-            telemetry.addData("leftTarget", newLeftTarget);
-            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurn(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newLeftTarget);
-            rightMotor.setTargetPosition(newRightTarget);
-
-
-            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-            rightMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-
-            leftMotor.setPower(0);
-            rightMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
-        }
-
-
-    }
-
-    public void encoderTurnRight(double power, double degree, double timeoutS) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        resetEncoder();
-
-
-        if (opModeIsActive()) {
-            newLeftTarget = leftMotor.getCurrentPosition() - (int) calcTurn(degree);
-            telemetry.addData("leftTarget", newLeftTarget);
-            newRightTarget = -rightMotor.getCurrentPosition() + (int) calcTurn(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newLeftTarget);
-            rightMotor.setTargetPosition(newRightTarget);
-
-
-            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-            rightMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-
-            leftMotor.setPower(0);
-            rightMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
-        }
-
-
-    }
-
-    private double calcTurn(double degree) {
-        return (Math.PI * ROBOT_WIDTH * (degree / 360)) * COUNTS_PER_INCH;
-    }
-
-    public void encoderTurnLeftOne(double power, double degree, double timeoutS) {
-        int newRightTarget;
-
-        resetEncoder();
-
-        if (opModeIsActive()) {
-            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            rightMotor.setTargetPosition(newRightTarget);
-
-            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            rightMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (rightMotor.isBusy())) {
-                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-            rightMotor.setPower(0);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
-        }
-
-
-    }
-
-
-    public void encoderTurnRightOne(double power, double degree, double timeoutS) {
-        int newRightTarget;
-
-        resetEncoder();
-
-        if (opModeIsActive()) {
-            newRightTarget = leftMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
-            telemetry.addData("rightTarget", newRightTarget);
-            leftMotor.setTargetPosition(newRightTarget);
-
-            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-            runtime.reset();
-            leftMotor.setPower(Math.abs(power));
-
-            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-                    (rightMotor.isBusy())) {
-                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-                telemetry.update();
-
-            }
-            leftMotor.setPower(0);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            resetEncoder();
+            turnRightByGyro(motorPower, -(targetDegree - CORRECTION));
         }
     }
 
 
-    private double calcTurnRadius(double degree) {
-        return (Math.PI * ROBOT_WIDTH * 2 * (degree / 360)) * COUNTS_PER_INCH;
+
+    private void turnLeftByGyro (double motorPower, double targetDegree) {
+        double zeroReference = getGyroYAngle();
+        double angleTurned = 0;
+       rightMotor.setPower(-motorPower);
+       leftMotor.setPower(motorPower);
+        while( opModeIsActive() && (angleTurned < targetDegree))
+        {
+            double currentAngle = getGyroYAngle();
+            angleTurned = adjustedAngle(zeroReference, currentAngle);
+            telemetry.addData("currentAngle", currentAngle);
+            telemetry.addData("AngleTurned", angleTurned);
+            telemetry.addData("Target", targetDegree);
+            telemetry.update();
+        }
+        rightMotor.setPower(0);
+         leftMotor.setPower(0);
+        telemetry.addData("Power = 0", 0);
+        telemetry.update();
     }
+
+    private void turnRightByGyro (double motorPower, double targetDegree) {
+        double zeroReference = getGyroYAngle();
+        double angleTurned = 0;
+        rightMotor.setPower(motorPower);
+        leftMotor.setPower(-motorPower);
+        while( opModeIsActive() && (angleTurned > (-targetDegree)))
+        {
+            double currentAngle = getGyroYAngle();
+            angleTurned = adjustedAngle(zeroReference, currentAngle);
+            telemetry.addData("currentAngle", currentAngle);
+            telemetry.addData("AngleTurned", angleTurned);
+            telemetry.addData("Target", targetDegree);
+            telemetry.update();
+        }
+        rightMotor.setPower(0);
+        leftMotor.setPower(0);
+        telemetry.addData("Power = 0", 0);
+        telemetry.update();
+    }
+
+//    private void resetEncoder() {
+//        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+//        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//    }
+//
+//    public void encoderTurn(double power, double degree, double timeoutS) {
+//        if (degree < 0) {
+//            encoderTurnLeft(power, -degree, timeoutS);
+//        } else {
+//            encoderTurnRight(power, degree, timeoutS);
+//        }
+//    }
+//
+//    public void encoderTurnOneWheel(double power, double degree, double timeoutS) {
+//        if (degree < 0) {
+//            encoderTurnLeftOne(power, degree, timeoutS);
+//        } else {
+//            encoderTurnRightOne(power, degree, timeoutS);
+//        }
+//    }
+//
+//    public void encoderTurnLeft(double power, double degree, double timeoutS) {
+//        int newLeftTarget;
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//        if (opModeIsActive()) {
+//            newLeftTarget = -leftMotor.getCurrentPosition() + (int) calcTurn(degree);
+//            telemetry.addData("leftTarget", newLeftTarget);
+//            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurn(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            leftMotor.setTargetPosition(newLeftTarget);
+//            rightMotor.setTargetPosition(newRightTarget);
+//
+//
+//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            leftMotor.setPower(Math.abs(power));
+//            rightMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
+//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
+//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//
+//            leftMotor.setPower(0);
+//            rightMotor.setPower(0);
+//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//
+//
+//    }
+//
+//    public void encoderTurnRight(double power, double degree, double timeoutS) {
+//        int newLeftTarget;
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//
+//        if (opModeIsActive()) {
+//            newLeftTarget = leftMotor.getCurrentPosition() - (int) calcTurn(degree);
+//            telemetry.addData("leftTarget", newLeftTarget);
+//            newRightTarget = -rightMotor.getCurrentPosition() + (int) calcTurn(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            leftMotor.setTargetPosition(newLeftTarget);
+//            rightMotor.setTargetPosition(newRightTarget);
+//
+//
+//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            leftMotor.setPower(Math.abs(power));
+//            rightMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
+//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
+//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//
+//            leftMotor.setPower(0);
+//            rightMotor.setPower(0);
+//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//
+//
+//    }
+//
+//    private double calcTurn(double degree) {
+//        return (Math.PI * ROBOT_WIDTH * (degree / 360)) * COUNTS_PER_INCH;
+//    }
+//
+//    public void encoderTurnLeftOne(double power, double degree, double timeoutS) {
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//        if (opModeIsActive()) {
+//            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            rightMotor.setTargetPosition(newRightTarget);
+//
+//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            rightMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (rightMotor.isBusy())) {
+//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//            rightMotor.setPower(0);
+//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//
+//
+//    }
+//
+//
+//    public void encoderTurnRightOne(double power, double degree, double timeoutS) {
+//        int newRightTarget;
+//
+//        resetEncoder();
+//
+//        if (opModeIsActive()) {
+//            newRightTarget = leftMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
+//            telemetry.addData("rightTarget", newRightTarget);
+//            leftMotor.setTargetPosition(newRightTarget);
+//
+//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+//
+//            runtime.reset();
+//            leftMotor.setPower(Math.abs(power));
+//
+//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
+//                    (rightMotor.isBusy())) {
+//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
+//                telemetry.update();
+//
+//            }
+//            leftMotor.setPower(0);
+//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//            resetEncoder();
+//        }
+//    }
+//
+//
+//    private double calcTurnRadius(double degree) {
+//        return (Math.PI * ROBOT_WIDTH * 2 * (degree / 360)) * COUNTS_PER_INCH;
+//    }
+
+
+//
 
 
 }

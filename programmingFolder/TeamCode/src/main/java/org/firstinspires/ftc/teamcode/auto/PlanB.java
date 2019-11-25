@@ -14,7 +14,7 @@ public class PlanB extends Autonomous {
         // stop
     }
 
-    public void planB() {
+    private void planB() {
         sleep(20000);
         drive(DRIVE_SPEED, TILE_LENGTH);
         brake();
