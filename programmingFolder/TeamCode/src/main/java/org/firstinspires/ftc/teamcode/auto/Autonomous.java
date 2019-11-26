@@ -182,7 +182,7 @@ public abstract class Autonomous extends LinearOpMode {
             }
         }
     }
-    
+
     private void backToPosition(double degree, double power) {
         leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);

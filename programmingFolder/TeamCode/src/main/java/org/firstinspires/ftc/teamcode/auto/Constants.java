@@ -23,5 +23,6 @@ public class Constants {
             GEAR_RATIO_ARM = GEAR_OUT/GEAR_IN,
             P_DISTANCE_PER_ROTATION = 20.8,
             TICKS_PER_MM_ARM = (GEAR_RATIO_ARM * COUNTS_PER_MOTOR_REV)/P_DISTANCE_PER_ROTATION,
-            CORRECTION = 3;
+            CORRECTION = 3,
+            DEGREE_THRESHOLD = 0.5;
 }
