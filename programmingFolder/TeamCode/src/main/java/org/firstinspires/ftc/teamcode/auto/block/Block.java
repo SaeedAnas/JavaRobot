@@ -28,7 +28,7 @@ abstract class Block extends Autonomous {
         sleep(500);
         grab();
         sleep(500);
-        drive(-DRIVE_SPEED, -((TILE_LENGTH * 2) - ROBOT_LENGTH));
+        drive(DRIVE_SPEED, -((TILE_LENGTH * 2) - ROBOT_LENGTH));
         turnByGyro(0.2, -95 * turnVal);
         drive(DRIVE_SPEED, 10);
         release();
