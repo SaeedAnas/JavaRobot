@@ -133,6 +133,111 @@ public abstract class Autonomous extends LinearOpMode {
         }
     }
 
+    // TODO Test out this code
+
+    protected void autoCorrectingDrive(double power, double distance) {
+        int newLeftTarget;
+        int newRightTarget;
+
+        if (opModeIsActive()) {
+            double degree = getGyroYAngle();
+            newLeftTarget = leftMotor.getCurrentPosition() + (int) (distance * COUNTS_PER_INCH);
+            newRightTarget = rightMotor.getCurrentPosition() + (int) (distance * COUNTS_PER_INCH);
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+            // for forward
+            if (distance > 0) {
+                leftMotor.setPower(power);
+                rightMotor.setPower(power);
+                while (opModeIsActive() && leftMotor.getCurrentPosition() < newLeftTarget && rightMotor.getCurrentPosition() < newRightTarget) {
+                    double currentDegree = getGyroYAngle();
+                    if (currentDegree < degree - DEGREE_THRESHOLD) {
+                        backToPosition(degree, power);
+                    } else if (currentDegree > degree + DEGREE_THRESHOLD) {
+                        backToPosition(degree, power);
+                    } else {
+                        leftMotor.setPower(power);
+                        rightMotor.setPower(power);
+                    }
+                }
+                leftMotor.setPower(0);
+                rightMotor.setPower(0);
+            } else {
+                leftMotor.setPower(-power);
+                rightMotor.setPower(-power);
+                while (opModeIsActive() && leftMotor.getCurrentPosition() > newLeftTarget && rightMotor.getCurrentPosition() > newRightTarget) {
+                    double currentDegree = getGyroYAngle();
+                    if (currentDegree < degree - DEGREE_THRESHOLD) {
+                        backToPosition(degree, power);
+                    } else if (currentDegree > degree + DEGREE_THRESHOLD) {
+                        backToPosition(degree, power);
+                    } else {
+                        leftMotor.setPower(-power);
+                        rightMotor.setPower(-power);
+                    }
+                }
+                leftMotor.setPower(0);
+                rightMotor.setPower(0);
+            }
+        }
+    }
+    
+    private void backToPosition(double degree, double power) {
+        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        // if the fastest way is to go right
+        if(isRight(degree)) {
+            leftMotor.setPower(power);
+            rightMotor.setPower(-power);
+            double currentAngle = getGyroYAngle();
+            while(opModeIsActive() && ((currentAngle < degree - DEGREE_THRESHOLD) && (currentAngle > degree + DEGREE_THRESHOLD))) {
+                currentAngle = getGyroYAngle();
+                telemetry.addData("Status", "Correcting...");
+                telemetry.update();
+            }
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+        // the fastest way to go is left
+        else {
+            leftMotor.setPower(-power);
+            rightMotor.setPower(power);
+            double currentAngle = getGyroYAngle();
+            while(opModeIsActive() && ((currentAngle < degree - DEGREE_THRESHOLD) && (currentAngle > degree + DEGREE_THRESHOLD))) {
+                currentAngle = getGyroYAngle();
+                telemetry.addData("Status", "Correcting...");
+                telemetry.update();
+            }
+            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        }
+    }
+
+    private boolean isRight(double degree) {
+        double currentAngle = getGyroYAngle();
+        boolean isRight = false;
+        // left increases
+        // right decreases
+        // -179 -> 179
+        // if the current angle is negative and the degree > 0, then the fastest way to get to the degree is to go the opposite way.
+        if (currentAngle < 0 && degree > 0) {
+             isRight = true;
+        }
+        // we dont need these two because isRight is already false -> saves some time
+//        else if (currentAngle > 0 && degree < 0) {
+//             isRight = false;
+//        } else if (currentAngle < degree) {
+//            isRight = false;
+//        }
+        else if (currentAngle > degree) {
+            isRight = true;
+        }
+        return isRight;
+    }
+
+
     protected void drive(double power, double distance) {
         drive(power, distance, distance);
 
@@ -152,8 +257,8 @@ public abstract class Autonomous extends LinearOpMode {
 
             if (leftInches < 0) {
 
-                leftMotor.setPower(power);
-                rightMotor.setPower(power);
+                leftMotor.setPower(-power);
+                rightMotor.setPower(-power);
                 while (opModeIsActive() && leftMotor.getCurrentPosition() > newLeftTarget && rightMotor.getCurrentPosition() > newRightTarget) {
                     telemetry.addData("CurrentLeft: ", leftMotor.getCurrentPosition());
                     telemetry.addData("TargetRight: ", newLeftTarget);
