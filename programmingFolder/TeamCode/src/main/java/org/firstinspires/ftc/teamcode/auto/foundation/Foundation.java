@@ -21,11 +21,11 @@ abstract class Foundation extends Autonomous {
     private void moveFoundationHorizontal(char team) {
         checkTeam(team);
         releaseFoundation();
-        drive(-DRIVE_SPEED, -3);
+        drive(DRIVE_SPEED, -3);
         turnByGyro(TURN_SPEED, -45 * turnVal);
-        drive(-DRIVE_SPEED, -30);
+        drive(DRIVE_SPEED, -30);
         turnByGyro(TURN_SPEED, 45 * turnVal);
-        drive(-DRIVE_SPEED, -(TILE_LENGTH - 18));
+        drive(DRIVE_SPEED, -(TILE_LENGTH - 18));
         grabFoundation();
         sleep(1000);
         drive(DRIVE_SPEED, 5);
