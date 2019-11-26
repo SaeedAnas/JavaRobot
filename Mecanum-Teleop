@@ -212,7 +212,7 @@ public class Teleop extends LinearOpMode {
 //            }
 //        }
         // forward and backward motion     // ask Peter about this
-        if (gamepad1.left_stick_y!=0 && gamepad1.left_stick_x<-0.3 || gamepad1.left_stick_x >0.3) {
+        if (gamepad1.left_stick_y!=0 && gamepad1.left_stick_x>-0.3 || gamepad1.left_stick_x <0.3) {
             rearRight.setPower(gamepad1.left_stick_y);
             rearLeft.setPower(gamepad1.left_stick_y);
             frontLeft.setPower(gamepad1.left_stick_y);
@@ -225,7 +225,7 @@ public class Teleop extends LinearOpMode {
         }
 
         //sliding motion left
-        if (gamepad1.left_stick_x!=0 && gamepad1.left_stick_y<-0.3 || gamepad1.left_stick_y >0.3) {
+        if (gamepad1.left_stick_x!=0 && gamepad1.left_stick_y>-0.3 || gamepad1.left_stick_y <0.3) {
             rearLeft.setPower()(-gamepad1.left_stick_x); // negative negative cancels out  confirm and test
             rearRight.setPower(gamepad1.left_stick_x);
             frontLeft.setPower(gamepad1.left_stick_x);
@@ -237,7 +237,7 @@ public class Teleop extends LinearOpMode {
             frontRight.setPower(0);
         }
         // sliding motion right  & Copy of Sliding Motion Left       TEST THIS
-        if (gamepad1.left_stick_x!=0 && gamepad1.left_stick_y<-0.3 || gamepad1.left_stick_y >0.3) {
+        if (gamepad1.left_stick_x!=0 && gamepad1.left_stick_y>-0.3 || gamepad1.left_stick_y <0.3) {
             rearLeft.setPower(-gamepad1.left_stick_x);
             rearRight.setPower(gamepad1.left_stick_x);
             frontLeft.setPower(gamepad1.left_stick_x);
@@ -276,7 +276,7 @@ public class Teleop extends LinearOpMode {
         }
 
         //Strafe Top-Left
-        if (gamepad1.right_stick_y!=0 && gamepad1.right_stick_x<-0.3 || gamepad1.right_stick_x>0.3) {
+        if (gamepad1.right_stick_y!=0 && gamepad1.right_stick_x>-0.3 || gamepad1.right_stick_x<0.3) {
             frontLeft.setPower(0);
             rearLeft.setPower(gamepad1.right_stick_y);
             frontRight.setPower(gamepad1.right_stick_y);
@@ -289,7 +289,7 @@ public class Teleop extends LinearOpMode {
         }
 
         //Strafe Bottom-Right & Copy of Top-Left
-        if (gamepad1.right_stick_y!=0 && gamepad1.right_stick_x<-0.3 || gamepad1.right_stick_x>0.3) {
+        if (gamepad1.right_stick_y!=0 && gamepad1.right_stick_x>-0.3 || gamepad1.right_stick_x<0.3) {
             frontLeft.setPower(0);
             rearLeft.setPower(gamepad1.right_stick_y);
             frontRight.setPower(gamepad1.right_stick_y);
@@ -302,7 +302,7 @@ public class Teleop extends LinearOpMode {
         }
 
         //Strafe Top-Right
-        if (gamepad1.right_stick_x!=0 && gamepad1.right_stick_y<-0.3 || gamepad1.right_stick_y>0.3) {
+        if (gamepad1.right_stick_x!=0 && gamepad1.right_stick_y>-0.3 || gamepad1.right_stick_y<0.3) {
             frontLeft.setPower(-gamepad1.right_stick_x);
             rearLeft.setPower(0);
             frontRight.setPower(0);
@@ -315,7 +315,7 @@ public class Teleop extends LinearOpMode {
         }
 
         //Strafe Bottom-Left & Copy of Strafe Top-Right
-        if (gamepad1.right_stick_x!=0 && gamepad1.right_stick_y<-0.3 || gamepad1.right_stick_y>0.3) {
+        if (gamepad1.right_stick_x!=0 && gamepad1.right_stick_y>-0.3 || gamepad1.right_stick_y<0.3) {
             frontLeft.setPower(-gamepad1.right_stick_x);
             rearLeft.setPower(0);
             frontRight.setPower(0);
