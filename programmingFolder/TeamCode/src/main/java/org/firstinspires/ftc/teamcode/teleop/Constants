@@ -1,0 +1,15 @@
+package org.firstinspires.ftc.teamcode.Teleop;
+
+public class Constants  {
+    public static final double
+    LEFT_FOUNDATION_DOWN = 1,
+    LEFT_FOUNDATION_UP = 0,
+    RIGHT_FOUNDATION_DOWN = 0,
+    RIGHT_FOUNDATION_UP = 1,
+    SERVO_GRAB = 0.3,
+    SERVO_RELEASE = 0,
+    FULL_SPEED=1,
+    ZERO_SPEED=0,
+    SLOW_DOWN1 = 1.3,
+    SLOW_DOWN2 = 1.5;
+}
