@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.auto.foundation;
 
 import org.firstinspires.ftc.teamcode.auto.Autonomous;
 
+import static org.firstinspires.ftc.teamcode.auto.Autonomous.Direction.*;
 import static org.firstinspires.ftc.teamcode.auto.Constants.*;
 
 abstract class Foundation extends Autonomous {
@@ -21,17 +22,17 @@ abstract class Foundation extends Autonomous {
     private void moveFoundationHorizontal(char team) {
         checkTeam(team);
         releaseFoundation();
-        drive(DRIVE_SPEED, -3);
+        move(BACKWARD, 3, DRIVE_SPEED);
         turnByGyro(TURN_SPEED, -45 * turnVal);
-        drive(DRIVE_SPEED, -30);
+        move(BACKWARD, 30, DRIVE_SPEED);
         turnByGyro(TURN_SPEED, 45 * turnVal);
-        drive(DRIVE_SPEED, -(TILE_LENGTH - 18));
+        move(BACKWARD, TILE_LENGTH - 18, DRIVE_SPEED);
         grabFoundation();
         sleep(1000);
-        drive(DRIVE_SPEED, 5);
+        move(FORWARD, 5, DRIVE_SPEED);
         turnByGyro(1, -90 * turnVal);
         releaseFoundation();
-        drive(DRIVE_SPEED, TILE_LENGTH - 3);
+        move(FORWARD, TILE_LENGTH - 3, DRIVE_SPEED);
         brake();
     }
 
