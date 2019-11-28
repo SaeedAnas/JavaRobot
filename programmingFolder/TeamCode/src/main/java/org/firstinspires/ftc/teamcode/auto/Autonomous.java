@@ -3,20 +3,27 @@ package org.firstinspires.ftc.teamcode.auto;
 import com.qualcomm.hardware.bosch.BNO055IMU;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
+
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesOrder;
 import org.firstinspires.ftc.robotcore.external.navigation.AxesReference;
 import org.firstinspires.ftc.robotcore.external.navigation.Orientation;
 
+import static org.firstinspires.ftc.teamcode.auto.Autonomous.Direction.*;
 import static org.firstinspires.ftc.teamcode.auto.Constants.*;
 
 public abstract class Autonomous extends LinearOpMode {
     // contains all methods to move the robot
 
-    private static DcMotor leftMotor;
+    private static DcMotor topRight;
 
-    private static DcMotor rightMotor;
+    private static DcMotor topLeft;
+
+    private static DcMotor bottomLeft;
+
+    private static DcMotor bottomRight;
 
     private static DcMotor armMotorLeft;
 
@@ -34,27 +41,44 @@ public abstract class Autonomous extends LinearOpMode {
 
     protected void initHardware() {
         initImu();
-        leftMotor = hardwareMap.get(DcMotor.class, "left");
-        rightMotor = hardwareMap.get(DcMotor.class, "right");
-        armMotorLeft = hardwareMap.get(DcMotor.class, "armLeft");
-        armMotorRight = hardwareMap.get(DcMotor.class, "armRight");
-        foundationLeft = hardwareMap.get(Servo.class, "leftFoundation");
-        foundationRight = hardwareMap.get(Servo.class, "rightFoundation");
-        grabber = hardwareMap.get(Servo.class, "grabber");
+//        leftMotor = hardwareMap.get(DcMotor.class, "left");
+//        rightMotor = hardwareMap.get(DcMotor.class, "right");
+//        armMotorLeft = hardwareMap.get(DcMotor.class, "armLeft");
+//        armMotorRight = hardwareMap.get(DcMotor.class, "armRight");
+//        foundationLeft = hardwareMap.get(Servo.class, "leftFoundation");
+//        foundationRight = hardwareMap.get(Servo.class, "rightFoundation");
+//        grabber = hardwareMap.get(Servo.class, "grabber");
+//
+        topRight = hardwareMap.get(DcMotor.class, "frontRight");
+        topLeft = hardwareMap.get(DcMotor.class, "frontLeft");
+        bottomLeft = hardwareMap.get(DcMotor.class, "rearLeft");
+        bottomRight = hardwareMap.get(DcMotor.class, "rearRight");
         // armServo = hardwareMap.get(CRServo.class, "armServo");
-
+        topRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        topLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        // reverse right motors
+        topRight.setDirection(DcMotorSimple.Direction.REVERSE);
+        bottomRight.setDirection(DcMotorSimple.Direction.REVERSE);
         // rightMotor is upside-down
-        leftMotor.setDirection(DcMotor.Direction.REVERSE);
-        armMotorRight.setDirection(DcMotor.Direction.REVERSE);
+//        leftMotor.setDirection(DcMotor.Direction.REVERSE);
+//        armMotorRight.setDirection(DcMotor.Direction.REVERSE);
 
         // reset the encoder
-        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        topRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        topLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bottomLeft.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        bottomRight.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         // set motor to run using encoder
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        topRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        topLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         telemetry.addData("Ready!", "Press Start.");
+        telemetry.update();
         // wait for play
         waitForStart();
     }
@@ -69,23 +93,25 @@ public abstract class Autonomous extends LinearOpMode {
 
         imu = hardwareMap.get(BNO055IMU.class, "imu");
 
+        telemetry.addData("Status: ", "Calibrating");
+        telemetry.update();
         imu.initialize(parameters);
 
-        while (!isStopRequested() && !imu.isGyroCalibrated()) {
-            telemetry.addData("Mode", "calibrating...");
-            telemetry.update();
-        }
-        telemetry.addData("Mode", "waiting for start");
-        telemetry.addData("imu calibration status", imu.getCalibrationStatus().toString());
+        telemetry.addData("Status: ", "Imu Calibration Ready");
         telemetry.update();
+
     }
 
 
     protected void brake() {
-        rightMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        topLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        topRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomRight.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        bottomLeft.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        topLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        topRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
     }
 
     // Foundation code
@@ -133,162 +159,6 @@ public abstract class Autonomous extends LinearOpMode {
         }
     }
 
-    // TODO Test out this code
-
-    protected void autoCorrectingDrive(double power, double distance) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        if (opModeIsActive()) {
-            double degree = getGyroYAngle();
-            newLeftTarget = leftMotor.getCurrentPosition() + (int) (distance * COUNTS_PER_INCH);
-            newRightTarget = rightMotor.getCurrentPosition() + (int) (distance * COUNTS_PER_INCH);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-            // for forward
-            if (distance > 0) {
-                leftMotor.setPower(power);
-                rightMotor.setPower(power);
-                while (opModeIsActive() && leftMotor.getCurrentPosition() < newLeftTarget && rightMotor.getCurrentPosition() < newRightTarget) {
-                    double currentDegree = getGyroYAngle();
-                    if (currentDegree < degree - DEGREE_THRESHOLD) {
-                        backToPosition(degree, power);
-                    } else if (currentDegree > degree + DEGREE_THRESHOLD) {
-                        backToPosition(degree, power);
-                    } else {
-                        leftMotor.setPower(power);
-                        rightMotor.setPower(power);
-                    }
-                }
-                leftMotor.setPower(0);
-                rightMotor.setPower(0);
-            } else {
-                leftMotor.setPower(-power);
-                rightMotor.setPower(-power);
-                while (opModeIsActive() && leftMotor.getCurrentPosition() > newLeftTarget && rightMotor.getCurrentPosition() > newRightTarget) {
-                    double currentDegree = getGyroYAngle();
-                    if (currentDegree < degree - DEGREE_THRESHOLD) {
-                        backToPosition(degree, power);
-                    } else if (currentDegree > degree + DEGREE_THRESHOLD) {
-                        backToPosition(degree, power);
-                    } else {
-                        leftMotor.setPower(-power);
-                        rightMotor.setPower(-power);
-                    }
-                }
-                leftMotor.setPower(0);
-                rightMotor.setPower(0);
-            }
-        }
-    }
-
-    private void backToPosition(double degree, double power) {
-        leftMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        rightMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        // if the fastest way is to go right
-        if(isRight(degree)) {
-            leftMotor.setPower(power);
-            rightMotor.setPower(-power);
-            double currentAngle = getGyroYAngle();
-            while(opModeIsActive() && ((currentAngle < degree - DEGREE_THRESHOLD) && (currentAngle > degree + DEGREE_THRESHOLD))) {
-                currentAngle = getGyroYAngle();
-                telemetry.addData("Status", "Correcting...");
-                telemetry.update();
-            }
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-        // the fastest way to go is left
-        else {
-            leftMotor.setPower(-power);
-            rightMotor.setPower(power);
-            double currentAngle = getGyroYAngle();
-            while(opModeIsActive() && ((currentAngle < degree - DEGREE_THRESHOLD) && (currentAngle > degree + DEGREE_THRESHOLD))) {
-                currentAngle = getGyroYAngle();
-                telemetry.addData("Status", "Correcting...");
-                telemetry.update();
-            }
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        }
-    }
-
-    private boolean isRight(double degree) {
-        double currentAngle = getGyroYAngle();
-        boolean isRight = false;
-        // left increases
-        // right decreases
-        // -179 -> 179
-        // if the current angle is negative and the degree > 0, then the fastest way to get to the degree is to go the opposite way.
-        if (currentAngle < 0 && degree > 0) {
-             isRight = true;
-        }
-        // we dont need these two because isRight is already false -> saves some time
-//        else if (currentAngle > 0 && degree < 0) {
-//             isRight = false;
-//        } else if (currentAngle < degree) {
-//            isRight = false;
-//        }
-        else if (currentAngle > degree) {
-            isRight = true;
-        }
-        return isRight;
-    }
-
-
-    protected void drive(double power, double distance) {
-        drive(power, distance, distance);
-
-    }
-
-    // Drive Using Encoder
-    private void drive(double power, double leftInches, double rightInches) {
-        int newLeftTarget;
-        int newRightTarget;
-
-        if (opModeIsActive()) {
-            newLeftTarget = leftMotor.getCurrentPosition() + (int) (leftInches * COUNTS_PER_INCH);
-            newRightTarget = rightMotor.getCurrentPosition() + (int) (rightInches * COUNTS_PER_INCH);
-            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-
-
-            if (leftInches < 0) {
-
-                leftMotor.setPower(-power);
-                rightMotor.setPower(-power);
-                while (opModeIsActive() && leftMotor.getCurrentPosition() > newLeftTarget && rightMotor.getCurrentPosition() > newRightTarget) {
-                    telemetry.addData("CurrentLeft: ", leftMotor.getCurrentPosition());
-                    telemetry.addData("TargetRight: ", newLeftTarget);
-                    telemetry.addData("CurrentRight: ", rightMotor.getCurrentPosition());
-                    telemetry.addData("TargetRight: ", newRightTarget);
-                    telemetry.update();
-                }
-                leftMotor.setPower(0);
-                rightMotor.setPower(0);
-            } else {
-                leftMotor.setPower(power);
-                rightMotor.setPower(power);
-
-                while (opModeIsActive() && leftMotor.getCurrentPosition() < newLeftTarget && rightMotor.getCurrentPosition() < newRightTarget) {
-                    telemetry.addData("CurrentLeft: ", leftMotor.getCurrentPosition());
-                    telemetry.addData("TargetRight: ", newLeftTarget);
-                    telemetry.addData("CurrentRight: ", rightMotor.getCurrentPosition());
-                    telemetry.addData("TargetRight: ", newRightTarget);
-                    telemetry.update();
-                }
-                leftMotor.setPower(0);
-                rightMotor.setPower(0);
-            }
-
-
-        }
-
-
-    }
-
 // 179 -> -179
 // y value
 // right decreasing
@@ -318,14 +188,14 @@ public abstract class Autonomous extends LinearOpMode {
     }
 
 
-
-    private void turnLeftByGyro (double motorPower, double targetDegree) {
+    private void turnLeftByGyro(double motorPower, double targetDegree) {
         double zeroReference = getGyroYAngle();
         double angleTurned = 0;
-       rightMotor.setPower(-motorPower);
-       leftMotor.setPower(motorPower);
-        while( opModeIsActive() && (angleTurned < targetDegree))
-        {
+        topLeft.setPower(-motorPower);
+        bottomLeft.setPower(-motorPower);
+        topRight.setPower(motorPower);
+        bottomRight.setPower(motorPower);
+        while (opModeIsActive() && (angleTurned < targetDegree)) {
             double currentAngle = getGyroYAngle();
             angleTurned = adjustedAngle(zeroReference, currentAngle);
             telemetry.addData("currentAngle", currentAngle);
@@ -333,19 +203,22 @@ public abstract class Autonomous extends LinearOpMode {
             telemetry.addData("Target", targetDegree);
             telemetry.update();
         }
-        rightMotor.setPower(0);
-         leftMotor.setPower(0);
+        topLeft.setPower(0);
+        bottomLeft.setPower(0);
+        topRight.setPower(0);
+        bottomRight.setPower(0);
         telemetry.addData("Power = 0", 0);
         telemetry.update();
     }
 
-    private void turnRightByGyro (double motorPower, double targetDegree) {
+    private void turnRightByGyro(double motorPower, double targetDegree) {
         double zeroReference = getGyroYAngle();
         double angleTurned = 0;
-        rightMotor.setPower(motorPower);
-        leftMotor.setPower(-motorPower);
-        while( opModeIsActive() && (angleTurned > (-targetDegree)))
-        {
+        topLeft.setPower(motorPower);
+        bottomLeft.setPower(motorPower);
+        topRight.setPower(-motorPower);
+        bottomRight.setPower(-motorPower);
+        while (opModeIsActive() && (angleTurned > (-targetDegree))) {
             double currentAngle = getGyroYAngle();
             angleTurned = adjustedAngle(zeroReference, currentAngle);
             telemetry.addData("currentAngle", currentAngle);
@@ -353,184 +226,384 @@ public abstract class Autonomous extends LinearOpMode {
             telemetry.addData("Target", targetDegree);
             telemetry.update();
         }
-        rightMotor.setPower(0);
-        leftMotor.setPower(0);
+        topLeft.setPower(0);
+        bottomLeft.setPower(0);
+        topRight.setPower(0);
+        bottomRight.setPower(0);
         telemetry.addData("Power = 0", 0);
         telemetry.update();
     }
 
-//    private void resetEncoder() {
-//        leftMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        rightMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-//        leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//        rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//    }
-//
-//    public void encoderTurn(double power, double degree, double timeoutS) {
-//        if (degree < 0) {
-//            encoderTurnLeft(power, -degree, timeoutS);
-//        } else {
-//            encoderTurnRight(power, degree, timeoutS);
+    protected void move(Direction direction, double distance, double power) {
+        if (opModeIsActive()) {
+            DcMotor[] motors = direction.getMotors();
+            double[] targets = direction.getTarget(distance, motors);
+            direction.setPower(power);
+            while (opModeIsActive() && direction.hasNotReached(targets, motors)) {
+                    direction.setPower(power);
+                    telemetry.addData("Direction: ", direction);
+                    telemetry.update();
+            }
+            Direction.stopRobot(motors);
+        }
+    }
+
+    protected void autoCorrectMove(Direction direction, double distance, double power) {
+        if (opModeIsActive()) {
+            double degree = getGyroYAngle();
+            double currentDegree;
+            DcMotor[] motors = direction.getMotors();
+            double[] targets = direction.getTarget(distance, motors);
+            direction.setPower(power);
+            while (opModeIsActive() && direction.hasNotReached(targets, motors)) {
+                currentDegree = getGyroYAngle();
+                if (currentDegree < degree - DEGREE_THRESHOLD) {
+                    correctPosition(degree, power);
+                }
+                else if (currentDegree > degree + DEGREE_THRESHOLD) {
+                    correctPosition(degree, power);
+                }
+                else {
+                    direction.setPower(power);
+                    telemetry.addData("Direction: ", direction);
+                    telemetry.update();
+                }
+            }
+            Direction.stopRobot(motors);
+        }
+    }
+
+    private void correctPosition(double degree, double power) {
+        topRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        topLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bottomRight.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        bottomLeft.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+        if (isRight(degree)) {
+            topLeft.setPower(power);
+            bottomLeft.setPower(power);
+            topRight.setPower(-power);
+            bottomRight.setPower(-power);
+        } else {
+            topLeft.setPower(-power);
+            bottomLeft.setPower(-power);
+            topRight.setPower(power);
+            bottomRight.setPower(power);
+        }
+            double currentAngle = getGyroYAngle();
+            while(opModeIsActive() && ((currentAngle < degree - DEGREE_THRESHOLD) && (currentAngle > degree + DEGREE_THRESHOLD))) {
+                telemetry.addData("Status", "Correcting");
+                telemetry.update();
+                currentAngle = getGyroYAngle();
+            }
+
+        topRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        topLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomRight.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        bottomLeft.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
+    }
+
+    private boolean isRight(double degree) {
+        double currentAngle = getGyroYAngle();
+        boolean isRight = false;
+        // left increases
+        // right decreases
+        // -179 -> 179
+        // if the current angle is negative and the degree > 0, then the fastest way to get to the degree is to go the opposite way.
+        if (currentAngle < 0 && degree > 0) {
+            isRight = true;
+        }
+        // we dont need these two because isRight is already false -> saves some time
+//        else if (currentAngle > 0 && degree < 0) {
+//             isRight = false;
+//        } else if (currentAngle < degree) {
+//            isRight = false;
 //        }
-//    }
-//
-//    public void encoderTurnOneWheel(double power, double degree, double timeoutS) {
-//        if (degree < 0) {
-//            encoderTurnLeftOne(power, degree, timeoutS);
-//        } else {
-//            encoderTurnRightOne(power, degree, timeoutS);
-//        }
-//    }
-//
-//    public void encoderTurnLeft(double power, double degree, double timeoutS) {
-//        int newLeftTarget;
-//        int newRightTarget;
-//
-//        resetEncoder();
-//
-//        if (opModeIsActive()) {
-//            newLeftTarget = -leftMotor.getCurrentPosition() + (int) calcTurn(degree);
-//            telemetry.addData("leftTarget", newLeftTarget);
-//            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurn(degree);
-//            telemetry.addData("rightTarget", newRightTarget);
-//            leftMotor.setTargetPosition(newLeftTarget);
-//            rightMotor.setTargetPosition(newRightTarget);
-//
-//
-//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//            runtime.reset();
-//            leftMotor.setPower(Math.abs(power));
-//            rightMotor.setPower(Math.abs(power));
-//
-//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-//                telemetry.update();
-//
-//            }
-//
-//            leftMotor.setPower(0);
-//            rightMotor.setPower(0);
-//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            resetEncoder();
-//        }
-//
-//
-//    }
-//
-//    public void encoderTurnRight(double power, double degree, double timeoutS) {
-//        int newLeftTarget;
-//        int newRightTarget;
-//
-//        resetEncoder();
-//
-//
-//        if (opModeIsActive()) {
-//            newLeftTarget = leftMotor.getCurrentPosition() - (int) calcTurn(degree);
-//            telemetry.addData("leftTarget", newLeftTarget);
-//            newRightTarget = -rightMotor.getCurrentPosition() + (int) calcTurn(degree);
-//            telemetry.addData("rightTarget", newRightTarget);
-//            leftMotor.setTargetPosition(newLeftTarget);
-//            rightMotor.setTargetPosition(newRightTarget);
-//
-//
-//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//            runtime.reset();
-//            leftMotor.setPower(Math.abs(power));
-//            rightMotor.setPower(Math.abs(power));
-//
-//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-//                    (leftMotor.isBusy() && rightMotor.isBusy())) {
-//                telemetry.addData("Path1", "Running to %7d :%7d", newLeftTarget, newRightTarget);
-//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-//                telemetry.update();
-//
-//            }
-//
-//            leftMotor.setPower(0);
-//            rightMotor.setPower(0);
-//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            resetEncoder();
-//        }
-//
-//
-//    }
-//
-//    private double calcTurn(double degree) {
-//        return (Math.PI * ROBOT_WIDTH * (degree / 360)) * COUNTS_PER_INCH;
-//    }
-//
-//    public void encoderTurnLeftOne(double power, double degree, double timeoutS) {
-//        int newRightTarget;
-//
-//        resetEncoder();
-//
-//        if (opModeIsActive()) {
-//            newRightTarget = rightMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
-//            telemetry.addData("rightTarget", newRightTarget);
-//            rightMotor.setTargetPosition(newRightTarget);
-//
-//            rightMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//            runtime.reset();
-//            rightMotor.setPower(Math.abs(power));
-//
-//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-//                    (rightMotor.isBusy())) {
-//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-//                telemetry.update();
-//
-//            }
-//            rightMotor.setPower(0);
-//            rightMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            resetEncoder();
-//        }
-//
-//
-//    }
-//
-//
-//    public void encoderTurnRightOne(double power, double degree, double timeoutS) {
-//        int newRightTarget;
-//
-//        resetEncoder();
-//
-//        if (opModeIsActive()) {
-//            newRightTarget = leftMotor.getCurrentPosition() - (int) calcTurnRadius(degree);
-//            telemetry.addData("rightTarget", newRightTarget);
-//            leftMotor.setTargetPosition(newRightTarget);
-//
-//            leftMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-//
-//            runtime.reset();
-//            leftMotor.setPower(Math.abs(power));
-//
-//            while (opModeIsActive() && (runtime.seconds() < timeoutS) &&
-//                    (rightMotor.isBusy())) {
-//                telemetry.addData("Path2", "Running at %7d :%7d", leftMotor.getCurrentPosition(), rightMotor.getCurrentPosition());
-//                telemetry.update();
-//
-//            }
-//            leftMotor.setPower(0);
-//            leftMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-//            resetEncoder();
-//        }
-//    }
-//
-//
-//    private double calcTurnRadius(double degree) {
-//        return (Math.PI * ROBOT_WIDTH * 2 * (degree / 360)) * COUNTS_PER_INCH;
-//    }
+        else if (currentAngle > degree) {
+            isRight = true;
+        }
+        return isRight;
+    }
+
+    public enum Direction {
+
+        FORWARD {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(power);
+                topLeft.setPower(power);
+                bottomRight.setPower(power);
+                bottomLeft.setPower(power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                double[] targets = new double[motors.length];
+                for (int i = 0; i < targets.length; i++) {
+                    targets[i] = motors[i].getCurrentPosition() + (distance * TICKS_PER_INCH_STRAIGHT);
+                }
+                return targets;
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                boolean hasNotReached = true;
+                for (int i = 0; i < targets.length; i++) {
+                    if (motors[i].getCurrentPosition() > targets[i]) {
+                        hasNotReached = false;
+                        break;
+                    }
+                }
+                return hasNotReached;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, topLeft, bottomLeft, bottomRight};
+            }
+        },
+        BACKWARD {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(-power);
+                topLeft.setPower(-power);
+                bottomRight.setPower(-power);
+                bottomLeft.setPower(-power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                double[] targets = new double[motors.length];
+                for (int i = 0; i < targets.length; i++) {
+                    targets[i] = motors[i].getCurrentPosition() - (distance * TICKS_PER_INCH_STRAIGHT);
+                }
+                return targets;
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                boolean hasNotReached = true;
+                for (int i = 0; i < targets.length; i++) {
+                    if (motors[i].getCurrentPosition() < targets[i]) {
+                        hasNotReached = false;
+                        break;
+                    }
+                }
+                return hasNotReached;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, topLeft, bottomLeft, bottomRight};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        LEFT {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(power);
+                topLeft.setPower(-power);
+                bottomRight.setPower(-power);
+                bottomLeft.setPower(power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                double[] targets = new double[motors.length];
+                for (int i = 0; i < targets.length; i++) {
+                    targets[i] = motors[i].getCurrentPosition() - (distance * TICKS_PER_INCH_STRAIGHT);
+                }
+                return targets;
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, topLeft, bottomLeft, bottomRight};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        RIGHT {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(-power);
+                topLeft.setPower(power);
+                bottomRight.setPower(power);
+                bottomLeft.setPower(-power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                return new double[0];
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, topLeft, bottomLeft, bottomRight};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        FORWARD_LEFT {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(power);
+                bottomLeft.setPower(power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                return new double[0];
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, bottomLeft};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        FORWARD_RIGHT {
+            @Override
+            public void setPower(double power) {
+                topLeft.setPower(power);
+                bottomRight.setPower(power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                return new double[0];
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topLeft, bottomRight};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        BACKWARD_LEFT {
+            @Override
+            public void setPower(double power) {
+                topRight.setPower(-power);
+                bottomLeft.setPower(-power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                return new double[0];
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topRight, bottomLeft};
+            }
+        },
+        // TODO Change the getTarget and hasNotReached
+        BACKWARD_RIGHT {
+            @Override
+            public void setPower(double power) {
+                topLeft.setPower(-power);
+                bottomRight.setPower(-power);
+            }
+
+            @Override
+            public double[] getTarget(double distance, DcMotor[] motors) {
+                return new double[0];
+            }
+
+            @Override
+            public boolean hasNotReached(double[] targets, DcMotor[] motors) {
+                return false;
+            }
+
+            @Override
+            public DcMotor[] getMotors() {
+                return new DcMotor[]{topLeft, bottomRight};
+            }
+        };
 
 
-//
+        public abstract void setPower(double power);
 
+        public abstract double[] getTarget(double distance, DcMotor[] motors);
 
+        public abstract boolean hasNotReached(double[] targets, DcMotor[] motors);
+
+        public abstract DcMotor[] getMotors();
+
+        public static void stopRobot(DcMotor[] motors) {
+            for (DcMotor motor : motors) {
+                motor.setPower(0);
+            }
+        }
+
+    }
+
+    protected void calibrate() {
+        topLeft.setPower(0.5);
+        sleep(1000);
+        topLeft.setPower(-0.5);
+        sleep(1000);
+        topRight.setPower(0.5);
+        sleep(1000);
+        topRight.setPower(-0.5);
+        sleep(1000);
+        bottomLeft.setPower(0.5);
+        sleep(1000);
+        bottomLeft.setPower(-0.5);
+        sleep(1000);
+        bottomRight.setPower(0.5);
+        sleep(1000);
+        bottomRight.setPower(-0.5);
+        sleep(1000);
+        rotateMotorsOnce(FORWARD, 1);
+        sleep(1000);
+        rotateMotorsOnce(BACKWARD, 1);
+        sleep(1000);
+        rotateMotorsOnce(LEFT, 1);
+        sleep(1000);
+        rotateMotorsOnce(RIGHT, 1);
+        sleep(1000);
+        rotateMotorsOnce(FORWARD_LEFT, 1);
+        sleep(1000);
+        rotateMotorsOnce(BACKWARD_LEFT, 1);
+        sleep(1000);
+        rotateMotorsOnce(FORWARD_RIGHT, 1);
+        sleep(1000);
+        rotateMotorsOnce(BACKWARD_RIGHT, 1);
+        sleep(1000);
+
+    }
+
+    protected void rotateMotorsOnce(Direction direction, double power) {
+        DcMotor[] motors = direction.getMotors();
+        direction.setPower(power);
+        sleep(1000);
+        Direction.stopRobot(motors);
+    }
 }
+
+

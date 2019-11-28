@@ -6,8 +6,10 @@ public class Constants {
             ROBOT_LENGTH = 15.25,
             TILE_LENGTH = 23.75,
             COUNTS_PER_MOTOR_REV = 1440,
-            DRIVE_GEAR_REDUCTION = 0.5, // this is < 1.0 if geared UP
-            WHEEL_DIAMETER_INCHES = 4.0,
+            DRIVE_GEAR_REDUCTION = 0.33333, // this is < 1.0 if geared UP
+            WHEEL_DIAMETER_INCHES = 3.85827,
+            WHEEL_WIDTH_INCHES = 1.77165,
+            ROLLER_LENGTH_INCHES = 1.5748,
             COUNTS_PER_INCH = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI),
             DRIVE_SPEED = 0.4,
             TURN_SPEED = 0.3,
@@ -24,5 +26,6 @@ public class Constants {
             P_DISTANCE_PER_ROTATION = 20.8,
             TICKS_PER_MM_ARM = (GEAR_RATIO_ARM * COUNTS_PER_MOTOR_REV)/P_DISTANCE_PER_ROTATION,
             CORRECTION = 3,
-            DEGREE_THRESHOLD = 0.5;
+            DEGREE_THRESHOLD = 0.5,
+            TICKS_PER_INCH_STRAIGHT = (COUNTS_PER_MOTOR_REV * DRIVE_GEAR_REDUCTION) / (WHEEL_DIAMETER_INCHES * Math.PI);
 }
