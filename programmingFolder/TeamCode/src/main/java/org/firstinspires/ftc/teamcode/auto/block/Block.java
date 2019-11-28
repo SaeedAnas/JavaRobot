@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.auto.block;
 
 import org.firstinspires.ftc.teamcode.auto.Autonomous;
 
+import static org.firstinspires.ftc.teamcode.auto.Autonomous.Direction.*;
 import static org.firstinspires.ftc.teamcode.auto.Constants.*;
 
 abstract class Block extends Autonomous {
@@ -22,15 +23,15 @@ abstract class Block extends Autonomous {
         release();
         whileArm(20, ARM_SPEED);
         sleep(500);
-        drive(DRIVE_SPEED, (TILE_LENGTH * 2) - ROBOT_LENGTH);
+        move(FORWARD, (TILE_LENGTH * 2) - ROBOT_LENGTH, DRIVE_SPEED);
         sleep(500);
         whileArm(-10, ARM_SPEED + 0.1);
         sleep(500);
         grab();
         sleep(500);
-        drive(DRIVE_SPEED, -((TILE_LENGTH * 2) - ROBOT_LENGTH));
+        move(BACKWARD, (TILE_LENGTH * 2) - ROBOT_LENGTH, DRIVE_SPEED);
         turnByGyro(0.2, -95 * turnVal);
-        drive(DRIVE_SPEED, 10);
+        move(FORWARD, 10, DRIVE_SPEED);
         release();
     }
 
